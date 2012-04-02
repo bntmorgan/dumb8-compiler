@@ -21,13 +21,13 @@ WORD [a-zA-Z0-9_]+
 int			{return tINT;}
 const			{return tCONST;}
 main			{return tMAIN;}
-{INTEGER}	        {return tINTEGER;}
-{WORD}			{return tWORD;}
+{INTEGER}	        {yylval.entier = atoi(yytext); return tINTEGER;}
+=			{return tEQ;}
+{WORD}			{yylval.chaine = strdup(yytext) ; return tWORD;}
 "+"			{return tADD;}
 -			{return tSUB;}
 "/"			{return tDIV;}
 "*"			{return tSTAR;}
-=			{return tEQ;}
 "("			{return tPARO;}
 ")"			{return tPARC;}
 "{"			{return tACCO;}

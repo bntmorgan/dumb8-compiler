@@ -1,6 +1,10 @@
 /****FICHIER DE TESTS*/
 
 /****Declarations*/
+int a = 1;
+int b;
+
+/****Affectations*/
 a = 1;
 b = d = e = 5;
 
