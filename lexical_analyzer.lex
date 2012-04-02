@@ -18,7 +18,7 @@ printf			{return tPRINTF; /* XXX : Version de base : pas de reconnaissance de fo
 int			{return tINT;}
 const			{return tCONST;}
 main			{return tMAIN;}
-{INTEGER}		{return tINTEGER;}
+{INTEGER}	        {return tINTEGER;}
 {WORD}			{return tWORD;}
 \+			{return tADD;}
 -			{return tSUB;}
