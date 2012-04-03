@@ -2,35 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "sym.h"
   
-#define MAX_SYM 4096
-
 void yyerror(char *s);
   
-enum types {
-  T_INT
-};
-  
-struct element {
-  char *name;
-  int type;
-};
-
-//symbols table
-struct element tsym[MAX_SYM] = {};
-
-//sybol table index
-int tsym_idx = 0;
-
-//variable indiquant le type courant
-int current_type = T_INT;
-
-//ajoute une variable dans la table des symboles
-void add_sym(char *name);
-
-//affiche la table des symboles
-void print_sym();
-
 %}
 
 //declaration des types utilisés
@@ -75,8 +50,9 @@ declarations : declaration tCOMMA declarations {}
 	     ; 
 
 declaration : tWORD tEQ tINTEGER {
-  printf("lol %s\n", $1);
-	            add_sym($1);
+                    //on utilise l'adresse courante tsym_idx dans la table des symboles
+                    printf("COP %d %d\n", get_sym_idx(), $3);
+                    add_sym($1);
             } 
             | tWORD {
                     add_sym($1);
@@ -110,7 +86,6 @@ parameters_call	: tWORD tCOMMA parameters_call {}
 
 f_call	: tWORD tPARO parameters_call tPARC {}
 	| tWORD tPARO tPARC {}
-	| 'KFC' tPARO tPARC {printf("tu pues !\n");}
 	;
 
 /*f_definition	: f_declaration tACCO instructions tACCC {printf("declaration de fonction\n");}
@@ -121,19 +96,6 @@ f_call	: tWORD tPARO parameters_call tPARC {}
 
 void yyerror(char *s) {
   fprintf(stderr, "Vous ne maîtrisez pas les concepts : %s\n", s);
-}
-
-void add_sym(char *name) {
-  tsym[tsym_idx].name = name;
-  tsym[tsym_idx].type = current_type;
-  tsym_idx++;
-}
-
-void print_sym() {
-  int i;
-  for(i = 0; i < tsym_idx; i++) {
-    printf("nom %s type %d\n", tsym[i].name, tsym[i].type);
-  }
 }
 
 int main(int argc, char **argv) {

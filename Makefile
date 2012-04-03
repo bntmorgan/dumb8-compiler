@@ -9,5 +9,8 @@ yacc : syntaxic_analyzer.y
 lex : lexical_analyzer.lex
 	lex -o lexical_analyzer.c lexical_analyzer.lex
 
-compiler : yacc lex 
-	gcc -g -Wall -o compiler lexical_analyzer.c syntaxic_analyzer.c -ll -ly
+sym : sym.c
+	gcc -c -g -Wall sym.c
+
+compiler : yacc lex sym
+	gcc -g -Wall -o compiler lexical_analyzer.c syntaxic_analyzer.c sym.o -ll -ly
