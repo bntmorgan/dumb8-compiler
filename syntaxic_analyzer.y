@@ -18,7 +18,7 @@ void yyerror(char *s);
 %token <entier> tINTEGER
 %token <chaine> tWORD
 
-%token tPRINTF tINT tCONST tMAIN tADD tSUB tDIV tSTAR tEQ tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
+%token tPRINTF tINT tCONST tMAIN tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
 //axiome
 %start instructions
@@ -28,15 +28,23 @@ void yyerror(char *s);
 
 %%
 
-instructions 	: instruction tSEMICOLON instructions {}
+instructions 	: instruction instructions {}
+	 	| bloc_instructions instructions {}
 		| tSEMICOLON instructions {}
+		| tSEMICOLON bloc_instructions {}
 	     	| {}
 	     	;
 
-instruction	: tINT declarations {printf ("declaration \n");}
-		| tWORD affectations {printf ("affectation \n");}
-		| f_declaration {printf("declaration de fonction\n");}
-		| f_call {printf("appel de fonction\n");}
+bloc_instructions	: tACCO instructions tACCC {}
+			;
+
+instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n");}
+		| tWORD affectations tSEMICOLON {printf ("affectation de variable\n");}
+		| f_declaration tSEMICOLON {printf("declaration de fonction\n");}
+		| f_call tSEMICOLON {printf("appel de fonction\n");}
+		| f_definition tSEMICOLON {printf("definition de fonction\n");}
+		| if {/* /!\ les if et les while sont des instructions qui ne finissent pas necessairement par un semicolon*/printf("if\n");}
+		| while {printf("while\n");}
 		;
 
 affectations 	: tEQ tWORD affectations {}
@@ -68,7 +76,8 @@ expr	: terme {}
 	;
 
 terme	: tINTEGER {}
-	| tWORD {/*Pas encore d'appel de fonction.*/}
+	| tWORD {}
+	| f_call {/*verifier la concordance des types*/}
 	;
 
 f_declaration	: tINT tWORD tPARO parameters_decl tPARC {}
@@ -88,8 +97,34 @@ f_call	: tWORD tPARO parameters_call tPARC {}
 	| tWORD tPARO tPARC {}
 	;
 
-/*f_definition	: f_declaration tACCO instructions tACCC {printf("declaration de fonction\n");}
-		;*/
+f_definition	: f_declaration bloc_instructions {}
+		;
+
+if	: tIF test bloc_instructions {}
+	| tIF test instruction {/*il faut au moins une instruction apres un if*/}
+	| tIF test bloc_instructions else {/*cas d'un if-else*/}
+	| tIF test instruction else {}
+	;
+
+else	: tELSE bloc_instructions {}
+	| tELSE instruction {/*il faut au moins une instruction apres un else*/}
+	| tELSE if {/*cas du else if*/}
+	;
+
+while	: tWHILE test bloc_instructions {}
+	| tWHILE test instruction {}
+	;
+
+test	: tPARO condition tPARC {}
+	| tEXCL tPARO condition tPARC {}
+	;
+
+condition	: expr {}
+		| expr tEQ tEQ expr {}
+		| expr tEXCL tEQ expr {}
+		| expr tSUP expr {}
+		| expr tINF expr {}
+		;
 
 
 %%
