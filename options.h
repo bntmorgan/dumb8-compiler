@@ -17,4 +17,9 @@ extern FILE* file_out;
  */
 void do_options(int argc, char **argv);
 
+/**
+ * Fermeture des fichiers et annulation de redirection de l'entrée standard
+ */
+void close_files();
+
 #endif//__OPTIONS_H__
