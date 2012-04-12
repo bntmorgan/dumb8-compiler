@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "options.h"
 #include "sym.h"
   
 void yyerror(char *s);
@@ -65,7 +66,7 @@ declarations : declaration tCOMMA declarations {}
 
 declaration : tWORD tEQ tINTEGER {
                     // On utilise l'adresse courante tsym_idx dans la table des symboles
-                    printf("COP %d %d\n", get_sym_idx(&sym), $3);
+                    fprintf(file_out,"COP %d %d\n", get_sym_idx(&sym), $3);
                     add_sym(&sym, $1);
             } 
             | tWORD {
@@ -142,6 +143,7 @@ void yyerror(char *s) {
 int main(int argc, char **argv) {
   // Initialisation de la table des symboles
   create_sym(&sym);
+  do_options(argc, argv);
   yyparse();
   print_sym(&sym);
   free_sym(&sym);
