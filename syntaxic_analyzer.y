@@ -5,26 +5,29 @@
 #include "sym.h"
   
 void yyerror(char *s);
-  
+
+// Table des symboles
+struct t_sym sym;
+
 %}
 
-//declaration des types utilisés
+// Declaration des types utilisés
 %union {
   int entier;
   char *chaine;
 };
 
-//definition des types des tokens
+// Definition des types des tokens
 %token <entier> tINTEGER
 %token <chaine> tWORD
 
 %token tPRINTF tINT tCONST tMAIN tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
-//axiome
+// Axiome
 %start instructions
 
-//declaration du type des non terminaux qui ne sont pas des entiers
-//%type <nom_de_type> non_terminal
+// Declaration du type des non terminaux qui ne sont pas des entiers
+// %type <nom_de_type> non_terminal
 
 %%
 
@@ -58,12 +61,12 @@ declarations : declaration tCOMMA declarations {}
 	     ; 
 
 declaration : tWORD tEQ tINTEGER {
-                    //on utilise l'adresse courante tsym_idx dans la table des symboles
-                    printf("COP %d %d\n", get_sym_idx(), $3);
-                    add_sym($1);
+                    // On utilise l'adresse courante tsym_idx dans la table des symboles
+                    printf("COP %d %d\n", get_sym_idx(&sym), $3);
+                    add_sym(&sym, $1);
             } 
             | tWORD {
-                    add_sym($1);
+	            add_sym(&sym, $1);
 	    }
 	    ;
 
@@ -77,7 +80,7 @@ expr	: terme {}
 
 terme	: tINTEGER {}
 	| tWORD {}
-	| f_call {/*verifier la concordance des types*/}
+	| f_call {/* Verifier la concordance des types */}
 	;
 
 f_declaration	: tINT tWORD tPARO parameters_decl tPARC {}
@@ -101,14 +104,14 @@ f_definition	: f_declaration bloc_instructions {}
 		;
 
 if	: tIF test bloc_instructions {}
-	| tIF test instruction {/*il faut au moins une instruction apres un if*/}
-	| tIF test bloc_instructions else {/*cas d'un if-else*/}
+	| tIF test instruction {/* Il faut au moins une instruction apres un if */}
+	| tIF test bloc_instructions else {/* Cas d'un if-else */}
 	| tIF test instruction else {}
 	;
 
 else	: tELSE bloc_instructions {}
-	| tELSE instruction {/*il faut au moins une instruction apres un else*/}
-	| tELSE if {/*cas du else if*/}
+	| tELSE instruction {/* Il faut au moins une instruction apres un else */}
+	| tELSE if {/* Cas du else if */}
 	;
 
 while	: tWHILE test bloc_instructions {}
@@ -134,7 +137,10 @@ void yyerror(char *s) {
 }
 
 int main(int argc, char **argv) {
+  // Initialisation de la table des symboles
+  create_sym(&sym);
   yyparse();
-  print_sym();
+  print_sym(&sym);
+  free_sym(&sym);
   return 0;  
 }
