@@ -4,7 +4,7 @@
 /**
  * Taille max de la table des symboles
  */
-#define SIZE_STEP 1
+#define SIZE_STEP 32
 
 /**
  * Les types de la table des symboles
