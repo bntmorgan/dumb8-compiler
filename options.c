@@ -40,5 +40,4 @@ void do_options(int argc, char **argv) {
       exit(1);
     }
   }
-
 }

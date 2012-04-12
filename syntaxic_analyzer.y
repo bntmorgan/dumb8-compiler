@@ -147,5 +147,6 @@ int main(int argc, char **argv) {
   yyparse();
   print_sym(&sym);
   free_sym(&sym);
+  fclose(file_out);
   return 0;  
 }
