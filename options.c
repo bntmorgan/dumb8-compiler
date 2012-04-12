@@ -9,7 +9,7 @@ FILE* file_out = NULL;
 void do_options(int argc, char **argv) {
   int c;
 
-  while ((c = getopt (argc, argv, "n:")) != -1) {
+  while ((c = getopt (argc, argv, "o:")) != -1) {
     switch (c) {
     case 'o':
       file_out = fopen(optarg, "w");
