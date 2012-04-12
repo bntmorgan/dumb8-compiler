@@ -33,6 +33,3 @@ else {}
 
 /***While*/
 while (1) f(x);
-
-
-
