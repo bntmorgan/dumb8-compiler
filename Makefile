@@ -1,7 +1,7 @@
 all : compiler
 
 test : compiler test_grammar.c
-	cat test_grammar.c | ./compiler 
+	./compiler -o test_grammar.s test_grammar.c
 
 yacc : syntaxic_analyzer.y
 	yacc -d -o syntaxic_analyzer.c syntaxic_analyzer.y
