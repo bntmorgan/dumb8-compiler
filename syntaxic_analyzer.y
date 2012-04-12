@@ -9,6 +9,9 @@ void yyerror(char *s);
 // Table des symboles
 struct t_sym sym;
 
+// Adresse courante du programme
+int program_counter = 0;
+
 %}
 
 // Declaration des types utilisés
@@ -38,7 +41,7 @@ instructions 	: instruction instructions {}
 	     	| {}
 	     	;
 
-bloc_instructions	: tACCO instructions tACCC {}
+bloc_instructions	: tACCO {sym_push(&sym);} instructions tACCC {sym_pop(&sym);}
 			;
 
 instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n");}
