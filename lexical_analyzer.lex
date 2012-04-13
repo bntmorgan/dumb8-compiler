@@ -20,7 +20,7 @@ WORD [a-zA-Z0-9_]+
 
 int			{return tINT;}
 const			{return tCONST;}
-main			{return tMAIN;}
+printf			{return tPRINTF;}
 if			{return tIF;}
 else			{return tELSE;}
 while			{return tWHILE;}

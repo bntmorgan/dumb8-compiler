@@ -110,6 +110,20 @@ int get_sym_idx(struct t_sym *sym) {
   return sym->idx;
 }
 
+int get_address(struct t_sym *sym, char *name) {
+  int ret = -1;
+  int i;
+  /*La recherche debute a la fin de la table pour retourner en priorité 
+   variables propres à un bloc*/
+  for (i = sym->idx-1; i >= 0; i--) {
+    if (strcmp(name, sym->t[i].name) == 0) {
+      ret = i;
+      break;
+    }
+  }
+  return ret;
+}
+
 int sym_push(struct t_sym *sym) {
   printf("PUSH \n");
   if (sym->context_stack_head + 1 >= sym->context_stack_size) {
@@ -124,6 +138,10 @@ int sym_pop(struct t_sym *sym) {
   printf("POP \n");
   if (sym->context_stack_head < 0) {
     return -1;
+  }
+  int i;
+  for(i = sym->idx; i > sym->context_stack[sym->context_stack_head]; i--) {
+    free(sym->t[i].name);
   }
   sym->idx = sym->context_stack[sym->context_stack_head];
   sym->context_stack_head--;
