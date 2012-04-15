@@ -125,6 +125,13 @@ int sym_pop(struct t_sym *sym) {
   if (sym->context_stack_head < 0) {
     return -1;
   }
+  // Freeing the names
+  int old_idx = sym->context_stack[sym->context_stack_head];
+  int current_idx = sym->idx;
+  for (; old_idx < current_idx; old_idx++) {
+    free(sym->t[old_idx].name);
+  }
+  // Getting the old context
   sym->idx = sym->context_stack[sym->context_stack_head];
   sym->context_stack_head--;
   return 0;
