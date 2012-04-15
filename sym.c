@@ -98,7 +98,9 @@ void print_sym(struct t_sym *sym) {
 
 struct element* find_sym(struct t_sym *sym, char *name) {
   int i;
-  for (i = 0; i < sym->idx; i++) {
+  // On cherche de la tête de pile vers le bas pour avoir les 
+  // dernières variables instanciées
+  for (i = sym->idx - 1; i >= 0; i--) {
     if (strcmp(name, sym->t[i].name) == 0) {
       return &(sym->t[i]);
     }
@@ -125,7 +127,6 @@ int get_address(struct t_sym *sym, char *name) {
 }
 
 int sym_push(struct t_sym *sym) {
-  printf("PUSH \n");
   if (sym->context_stack_head + 1 >= sym->context_stack_size) {
     inc_context_stack_sym(sym);
   }
@@ -135,17 +136,16 @@ int sym_push(struct t_sym *sym) {
 }
 
 int sym_pop(struct t_sym *sym) {
-  printf("POP \n");
   if (sym->context_stack_head < 0) {
     return -1;
   }
-  // Freeing the names
+  // Libération des noms
   int old_idx = sym->context_stack[sym->context_stack_head];
   int current_idx = sym->idx;
   for (; old_idx < current_idx; old_idx++) {
     free(sym->t[old_idx].name);
   }
-  // Getting the old context
+  // Récupération du contexte précédent
   sym->idx = sym->context_stack[sym->context_stack_head];
   sym->context_stack_head--;
   return 0;
