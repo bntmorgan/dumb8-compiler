@@ -25,7 +25,7 @@ int program_counter = 0;
 %token <entier> tINTEGER
 %token <chaine> tWORD
 
-%token tPRINTF tINT tCONST tMAIN tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
+%token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
 // Axiome
 %start instructions
@@ -50,6 +50,7 @@ instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n")
 		| f_declaration tSEMICOLON {printf("declaration de fonction\n");}
 		| f_call tSEMICOLON {printf("appel de fonction\n");}
 		| f_definition tSEMICOLON {printf("definition de fonction\n");}
+		| printf tSEMICOLON {printf("Affichage d'une variable\n");}
 		| if {/* /!\ les if et les while sont des instructions qui ne finissent pas necessairement par un semicolon*/printf("if\n");}
 		| while {printf("while\n");}
 		;
@@ -133,7 +134,10 @@ condition	: expr {}
 		| expr tINF expr {}
 		;
 
-
+printf	: tPRINTF tPARO tWORD tPARC {
+		printf("PRI %d\n", get_address(&sym,$3));
+	}
+	;
 %%
 
 void yyerror(char *s) {

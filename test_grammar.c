@@ -2,10 +2,11 @@
 
 /****Declarations*/
 int a = 1;
-int b;
+int b = 11;
+int d = 21;
 
 /****Affectations*/
-a = 1;
+a = 3;
 b = d = e = 5;
 
 /****Appels de fonctions*/
@@ -33,3 +34,10 @@ else {}
 
 /***While*/
 while (1) f(x);
+
+/***Print*/
+printf(a);
+int q =6;
+{int q =34;
+int b = 3;
+printf(b);}

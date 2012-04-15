@@ -103,4 +103,15 @@ int sym_pop(struct t_sym *sym);
  */
 int get_sym_idx(struct t_sym *sym);
 
+/**
+ * Cherche un symbole dans la table des symboles et retourne -1
+ * s'il n'existe pas
+ * 
+ * @param sym la table des symboles
+ * @param name Nom de la variable dans la table des symboles
+ * @return int Adresse de la variable recherchee ou -1 si elle
+ * n'est pas dans la table
+ */
+int get_address(struct t_sym *sym, char *name);
+
 #endif//__SYM_H__
