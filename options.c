@@ -38,7 +38,7 @@ void do_options(int argc, char **argv) {
       abort ();
     }
   }
-  
+
   // Pas de fichier donné : fichier par défaut "a.out.s"
   if (file_out == NULL) {
     file_out = fopen("a.out.s", "w");

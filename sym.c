@@ -150,3 +150,4 @@ int sym_pop(struct t_sym *sym) {
   sym->context_stack_head--;
   return 0;
 }
+

@@ -27,6 +27,11 @@ int program_counter = 0;
 
 %token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
+%type <entier> expr terme condition return
+
+%left tADD tSUB
+%left tSTAR tDIV
+
 // Axiome
 %start instructions
 
@@ -85,7 +90,6 @@ expr	: terme {}
 
 terme	: tINTEGER {}
 	| tWORD {}
-	| f_call {/* Verifier la concordance des types */}
 	;
 
 f_declaration	: tINT tWORD tPARO parameters_decl tPARC {}
@@ -105,8 +109,15 @@ f_call	: tWORD tPARO parameters_call tPARC {}
 	| tWORD tPARO tPARC {}
 	;
 
-f_definition	: f_declaration bloc_instructions {}
+f_definition	: f_declaration f_body {}
 		;
+		
+f_body	: tACCO instructions tACCC {}
+		| tACCO instructions return tACCC {}
+		;
+
+return	: tRETURN expr {$$ = $2;}
+	;
 
 if	: tIF test bloc_instructions {}
 	| tIF test instruction {/* Il faut au moins une instruction apres un if */}
@@ -124,18 +135,16 @@ while	: tWHILE test bloc_instructions {}
 	;
 
 test	: tPARO condition tPARC {}
-	| tEXCL tPARO condition tPARC {}
 	;
 
-condition	: expr {}
-		| expr tEQ tEQ expr {}
-		| expr tEXCL tEQ expr {}
-		| expr tSUP expr {}
-		| expr tINF expr {}
+condition	: expr {fprintf(file_out,"%s %d %d\n","EQ",$1,0);}
+		| expr tEQ tEQ expr {fprintf(file_out,"%s %d %d\n","EQ",$1,$4);}
+		| expr tSUP expr {fprintf(file_out,"%s %d %d\n", "SUP",$1,$3);}
+		| expr tINF expr {fprintf(file_out,"%s %d %d\n", "INF",$1,$3);}
 		;
 
 printf	: tPRINTF tPARO tWORD tPARC {
-		printf("PRI %d\n", get_address(&sym,$3));
+		fprintf(file_out,"PRI %d\n", get_address(&sym,$3));
 	}
 	;
 %%

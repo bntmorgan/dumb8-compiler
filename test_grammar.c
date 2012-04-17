@@ -29,7 +29,7 @@ if (1>5) {}
 if (5) {int a = 8;}
 if (4 == 5+B) {int o=0;f(x);}
 if (1) f(x);
-else if (3<k) {k=4;}
+else if (3<8) {k=4;}
 else {}
 
 /***While*/
