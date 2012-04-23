@@ -68,12 +68,27 @@ declarations : declaration tCOMMA declarations {}
 	     ; 
 
 declaration : tWORD tEQ tINTEGER {
-                    // On utilise l'adresse courante tsym_idx dans la table des symboles
-                    fprintf(file_out,"COP %d %d\n", get_sym_idx(&sym), $3);
-                    add_sym(&sym, $1);
+                    // Ajout du symbole dans la table des symboles
+                    struct element *elt = add_sym(&sym, $1);
+		    // On donne l'adresse à la variable locale
+		    elt->address = sym.local_address;
+		    // Incrementation des adresses locales
+		    sym.local_address++;
+		    // On décale esp de 4 octets allocation de la variable
+		    fprintf(file_out,"SOU esp esp 1\n");
+		    // Initialication de la variable
+                    fprintf(file_out,"COP [ebp]-%d %d\n", elt->address, $3);
+                    
             } 
             | tWORD {
-	            add_sym(&sym, $1);
+	            // Ajout du symbole dans la table des symboles
+                    struct element *elt = add_sym(&sym, $1);
+		    // On donne l'adresse à la variable locale
+		    elt->address = sym.local_address;
+    		    // Incrementation des adresses locales
+		    sym.local_address++;
+		    // On décale esp de 4 octets allocation de la variable
+		    fprintf(file_out,"SOU esp esp 1\n");
 	    }
 	    ;
 
