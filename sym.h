@@ -19,6 +19,8 @@ enum types {
 struct element {
   char *name;
   int type;
+  int address; // Adresse de la variable : ebp - x pour var (!! x positif), adresse pour fonction
+  int initialized; // Drapeau de variable initialisée
 };
 
 /**

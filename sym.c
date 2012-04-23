@@ -77,6 +77,9 @@ int add_sym(struct t_sym *sym, char *name) {
   }
   sym->t[sym->idx].name = name;
   sym->t[sym->idx].type = sym->current_type;
+  // On indique que la variable n'est pas initialisée
+  sym->t[sym->idx].address = 0;
+  sym->t[sym->idx].initialized = 0;
   sym->idx++;
   return 0;
 }
@@ -119,7 +122,8 @@ int get_address(struct t_sym *sym, char *name) {
    variables propres à un bloc*/
   for (i = sym->idx-1; i >= 0; i--) {
     if (strcmp(name, sym->t[i].name) == 0) {
-      ret = i;
+      // récupération de l'adresse de la variable
+      ret = sym->t[i].address;
       break;
     }
   }
