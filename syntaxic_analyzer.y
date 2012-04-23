@@ -117,11 +117,31 @@ parameters_call	: tWORD tCOMMA parameters_call {}
 		| tINTEGER {}
 		;
 
-f_call	: tWORD tPARO parameters_call tPARC {}
+f_call	: tWORD tPARO parameters_call tPARC 
+        {
+	  // Appel de la fonction
+	  int adr = get_address(&sym, $1);
+	  // On teste si la fonction est bien initialisée
+	  if (adr == -1) {
+	    fprintf(stderr, "Error : uninitialized fonction\n");
+	  } else {
+	    fprintf(file_out, "CAL %d", adr);
+	  }
+        }
 	| tWORD tPARO tPARC {}
 	;
 
-f_definition	: f_declaration f_body {}
+f_definition	: f_declaration 
+                {
+		  // On stocke le contexte de symbole courant
+		  sym_push(&sym);
+		  // On doit redémarrer les adresses locales a 1
+		  sym.local_address = 1;
+                } f_body 
+                {
+		  // Libération du contexte de symbole du corps de la fonction
+		  sym_pop(&sym);
+                }
 		;
 		
 f_body	: tACCO instructions tACCC {}
@@ -156,7 +176,7 @@ condition	: expr {fprintf(file_out,"%s %d %d\n","EQ",$1,0);}
 		;
 
 printf	: tPRINTF tPARO tWORD tPARC {
-		fprintf(file_out,"PRI %d\n", get_address(&sym,$3));
+		fprintf(file_out,"PRI [ebp]-%d\n", get_address(&sym,$3));
 	}
 	;
 %%
