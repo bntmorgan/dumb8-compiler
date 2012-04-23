@@ -68,11 +68,11 @@ int inc_context_stack_sym(struct t_sym *sym) {
   return 0;
 }
 
-int add_sym(struct t_sym *sym, char *name) {
+struct element* add_sym(struct t_sym *sym, char *name) {
   // On teste si après avoir incrémenté l'index on pointe sur un élément du tableau
   if ((sym->idx + 1) >= sym->size) {
     if (inc_sym(sym) != 0) {
-      return -1;
+      return NULL;
     }
   }
   sym->t[sym->idx].name = name;
@@ -81,7 +81,7 @@ int add_sym(struct t_sym *sym, char *name) {
   sym->t[sym->idx].address = 0;
   sym->t[sym->idx].initialized = 0;
   sym->idx++;
-  return 0;
+  return &(sym->t[sym->idx]);
 }
 
 void print_sym(struct t_sym *sym) {

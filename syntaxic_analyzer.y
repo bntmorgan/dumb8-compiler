@@ -10,9 +10,6 @@ void yyerror(char *s);
 // Table des symboles
 struct t_sym sym;
 
-// Adresse courante du programme
-int program_counter = 0;
-
 %}
 
 // Declaration des types utilisés

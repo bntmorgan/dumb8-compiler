@@ -35,6 +35,10 @@ struct t_sym {
   int *context_stack;
   int context_stack_head;
   int context_stack_size;
+  // Adresse courante du programme
+  int program_counter;
+  // Adresse courante des variables locales
+  int local_address; 
 };
 
 /**
@@ -57,9 +61,9 @@ void free_sym(struct t_sym *sym);
  *
  * @param sym la table des symboles
  * @param name Nom de variable dans la table des symboles
- * @return 0 si tout se passe bien -1 si erreur d'allocation
+ * @return l'addresse de l'élément si tout se passe bien NULL si erreur d'allocation
  */
-int add_sym(struct t_sym *sym, char *name);
+struct element* add_sym(struct t_sym *sym, char *name);
 
 /**
  * Affiche la table des symboles
