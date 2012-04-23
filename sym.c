@@ -31,7 +31,7 @@ int create_sym(struct t_sym *sym) {
     return -1;
   } 
   // Allocation / initialisation de la pile de contexte
-  sym->context_stack = malloc(SIZE_STEP * sizeof(int));
+  sym->context_stack = malloc(SIZE_STEP * sizeof(struct context));
   if (sym->context_stack == NULL) {
     perror("Error while initializing context stack");
     free(sym->t);
@@ -61,7 +61,7 @@ int inc_sym(struct t_sym *sym) {
 int inc_context_stack_sym(struct t_sym *sym) {
   sym->context_stack_size *= 2;
   // Augmente la taille de la pile des contextes de deux fois la taille courante
-  sym->context_stack = realloc(sym->context_stack, sym->context_stack_size * sizeof(int));
+  sym->context_stack = realloc(sym->context_stack, sym->context_stack_size * sizeof(struct context));
   if (sym->context_stack == NULL) {
     return -1;
   }
@@ -135,7 +135,8 @@ int sym_push(struct t_sym *sym) {
     inc_context_stack_sym(sym);
   }
   sym->context_stack_head++;
-  sym->context_stack[sym->context_stack_head] = sym->idx;
+  sym->context_stack[sym->context_stack_head].idx = sym->idx;
+  sym->context_stack[sym->context_stack_head].local_address = sym->local_address;
   return 0;
 }
 
@@ -144,13 +145,14 @@ int sym_pop(struct t_sym *sym) {
     return -1;
   }
   // Libération des noms
-  int old_idx = sym->context_stack[sym->context_stack_head];
+  int old_idx = sym->context_stack[sym->context_stack_head].idx;
   int current_idx = sym->idx;
   for (; old_idx < current_idx; old_idx++) {
     free(sym->t[old_idx].name);
   }
   // Récupération du contexte précédent
-  sym->idx = sym->context_stack[sym->context_stack_head];
+  sym->idx = sym->context_stack[sym->context_stack_head].idx;
+  sym->local_address = sym->context_stack[sym->context_stack_head].local_address;
   sym->context_stack_head--;
   return 0;
 }

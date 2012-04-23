@@ -14,6 +14,14 @@ enum types {
 };
 
 /**
+ * Contexte
+ */
+struct context {
+  int idx;
+  int local_address;
+};
+
+/**
  * Element de la table des symboles
  */
 struct element {
@@ -32,7 +40,7 @@ struct t_sym {
   int size;
   int current_type;
   // Pile des index de contexte
-  int *context_stack;
+  struct context *context_stack;
   int context_stack_head;
   int context_stack_size;
   // Adresse courante du programme
