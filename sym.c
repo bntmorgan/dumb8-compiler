@@ -81,22 +81,28 @@ struct element* add_sym(struct t_sym *sym, char *name) {
   sym->t[sym->idx].address = 0;
   sym->t[sym->idx].initialized = 0;
   sym->idx++;
-  return &(sym->t[sym->idx]);
+  return &(sym->t[sym->idx-1]);
 }
 
 void print_sym(struct t_sym *sym) {
   int i;
-  printf("---------- TABLE DES SYMBOLES ----------\n");
-  printf("| Taille : %27d |\n", sym->size);
-  printf("| Index : %28d |\n", sym->idx);
-  printf("| Type courant : %21d |\n", sym->current_type);
-  printf("----------------------------------------\n");
-  printf("| Variables déclarées :                |\n");
-  printf("----------------------------------------\n");
-  for(i = 0; i < sym->idx; i++) {
-    printf("| Nom : %19s | type : %d |\n", sym->t[i].name, sym->t[i].type);
+  printf("---------------- TABLE DES SYMBOLES ----------------\n");
+  printf("| Taille : %39d |\n", sym->size);
+  printf("| Index : %40d |\n", sym->idx);
+  printf("----------------------------------------------------\n");
+  printf("| Variables déclarées :                            |\n");
+  printf("----------------------------------------------------\n");
+  for (i = 0; i < sym->idx; i++) {
+    if (sym->t[i].type == T_INT) {
+      printf("| Nom : %20s | type : %d | init : %d |\n", sym->t[i].name, sym->t[i].type, sym->t[i].initialized);
+    }
   }
-  printf("----------------------------------------\n");
+  for (i = 0; i < sym->idx; i++) {
+    if (sym->t[i].type == T_FUN) {
+      printf("| Nom : %7s | nb arg : %d | type : %d | init : %d |\n", sym->t[i].name, sym->t[i].nb_parameters, sym->t[i].type, sym->t[i].initialized);
+    }  
+  }
+  printf("----------------------------------------------------\n");
 }
 
 struct element* find_sym(struct t_sym *sym, char *name) {
@@ -157,3 +163,7 @@ int sym_pop(struct t_sym *sym) {
   return 0;
 }
 
+int change_current_type(struct t_sym *sym, enum types t) {
+  sym->current_type = t;
+  return 0;
+}

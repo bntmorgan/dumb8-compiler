@@ -9,13 +9,14 @@ int d = 21;
 a = 3;
 b = d = e = 5;
 
-/****Appels de fonctions*/
-f();
-f2(aa, bb, 5, 12);
-
 /***Declarations de fonctions*/
 int g();
 int g2(int i, int j);
+
+/****Appels de fonctions*/
+g();
+g2(i,j);
+f2(aa, bb, 5, 12);
 
 /***Definitions de fonctions*/
 int h(){f(x);};

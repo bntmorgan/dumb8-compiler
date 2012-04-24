@@ -10,6 +10,8 @@ void yyerror(char *s);
 // Table des symboles
 struct t_sym sym;
 
+// Adresse courante du programme
+int program_counter = 0;
 %}
 
 // Declaration des types utilisés
@@ -24,7 +26,8 @@ struct t_sym sym;
 
 %token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
-%type <entier> expr terme condition return
+%type <entier> expr terme condition parameters_decl parameters_call
+%type <chaine> f_declaration
 
 %left tADD tSUB
 %left tSTAR tDIV
@@ -68,27 +71,12 @@ declarations : declaration tCOMMA declarations {}
 	     ; 
 
 declaration : tWORD tEQ tINTEGER {
-                    // Ajout du symbole dans la table des symboles
-                    struct element *elt = add_sym(&sym, $1);
-		    // On donne l'adresse à la variable locale
-		    elt->address = sym.local_address;
-		    // Incrementation des adresses locales
-		    sym.local_address++;
-		    // On décale esp de 4 octets allocation de la variable
-		    fprintf(file_out,"SOU esp esp 1\n");
-		    // Initialication de la variable
-                    fprintf(file_out,"COP [ebp]-%d %d\n", elt->address, $3);
-                    
+                    // On utilise l'adresse courante tsym_idx dans la table des symboles
+                    fprintf(file_out,"COP %d %d\n", get_sym_idx(&sym), $3);
+                    add_sym(&sym, $1);
             } 
             | tWORD {
-	            // Ajout du symbole dans la table des symboles
-                    struct element *elt = add_sym(&sym, $1);
-		    // On donne l'adresse à la variable locale
-		    elt->address = sym.local_address;
-    		    // Incrementation des adresses locales
-		    sym.local_address++;
-		    // On décale esp de 4 octets allocation de la variable
-		    fprintf(file_out,"SOU esp esp 1\n");
+	            add_sym(&sym, $1);
 	    }
 	    ;
 
@@ -104,52 +92,109 @@ terme	: tINTEGER {}
 	| tWORD {}
 	;
 
-f_declaration	: tINT tWORD tPARO parameters_decl tPARC {}
-		| tINT tWORD tPARO tPARC {}
+f_declaration	: tINT tWORD tPARO parameters_decl tPARC {
+			// Le type courant est T_INT par defaut
+			// Changement du type courant de l'element a ajouter a la table
+			change_current_type(&sym,T_FUN);
+			struct element * element = add_sym(&sym, $2);
+			element->nb_parameters = $4;
+			// La fonction n'est ici pas encore initialisee
+			element->initialized = 0;
+			// Remise à T_INT du type courant
+			change_current_type(&sym,T_INT);
+			// La valeur retour est le nom de la fonction
+			$$ = $2;
+		}
+		| tINT tWORD tPARO tPARC {
+			// Changement du type courant de l'element a ajouter a la table
+			change_current_type(&sym,T_FUN);
+			struct element *element = add_sym(&sym, $2);
+			element->nb_parameters = 0;
+			// La fonction n'est ici pas encore initialisee
+			element->initialized = 0;
+			// Remise à T_INT du type courant
+			change_current_type(&sym,T_INT);
+			// La valeur retour est le nom de la fonction
+			$$ = $2;
+		}
 		;
 
-parameters_decl	: tINT tWORD tCOMMA parameters_decl {}
-		| tINT tWORD {}
-		;
-parameters_call	: tWORD tCOMMA parameters_call {}
-		| tINTEGER tCOMMA parameters_call {}
-		| tWORD {}
-		| tINTEGER {}
+parameters_decl	: tINT tWORD tCOMMA parameters_decl {
+			// Incrementation du compteur du nombre de parametres
+			$$ = $4 +1;
+		}
+		| tINT tWORD {
+			$$ = 1;
+		}
 		;
 
-f_call	: tWORD tPARO parameters_call tPARC 
-        {
-	  // Appel de la fonction
-	  int adr = get_address(&sym, $1);
-	  // On teste si la fonction est bien initialisée
-	  if (adr == -1) {
-	    fprintf(stderr, "Error : uninitialized fonction\n");
-	  } else {
-	    fprintf(file_out, "CAL %d", adr);
-	  }
-        }
-	| tWORD tPARO tPARC {}
+parameters_call	: tWORD tCOMMA parameters_call {
+			// Incrementation du compteur du nombre de parametres
+			$$ = $3 +1;
+		}
+		| tINTEGER tCOMMA parameters_call {
+			// Incrementation du compteur du nombre de parametres
+			$$ = $3 +1;
+		}
+		| tWORD { $$ = 1; }
+		| tINTEGER {$$ = 1; }
+		;
+
+f_call	: tWORD tPARO parameters_call tPARC {
+		struct element * element = find_sym(&sym,$1);
+		if (element != NULL) {
+				printf("Function %s -> %d\n",$1,element->nb_parameters);
+			// Verification de l'initialisation de la fonction
+			if (element->initialized == 0)
+				printf("Function %s is not initialized.\n",$1);
+				 
+			// Verification du nombre d'argument
+			if ((element->nb_parameters) > $3)
+				printf("Too many arguments in function : %s\n",$1);
+			else if ((element->nb_parameters) < $3)
+				printf("Too few arguments in function : %s\n",$1);
+			else 
+				printf("Function call ok -> %s has %d parameters\n",$1,element->nb_parameters);
+		}
+		else {
+			printf("Function %s is not define\n", $1);
+		}
+	}
+	| tWORD tPARO tPARC {
+		struct element * element = find_sym(&sym,$1);
+		if (element != NULL) {
+			// Verification de l'initialisation de la fonction
+			if (element->initialized == 0)
+				printf("Function %s is not initialized.\n",$1);
+
+			// Verification du nombre d'argument
+			if (element->nb_parameters > 0)
+				printf("Too many arguments in function : %s\n",$1);
+			else 
+				printf("Function call ok -> %s has %d parameters\n",$1,0);
+		}
+		else {
+			printf("Function %s is not define\n", $1);
+		}
+	}	
 	;
 
-f_definition	: f_declaration 
-                {
-		  // On stocke le contexte de symbole courant
-		  sym_push(&sym);
-		  // On doit redémarrer les adresses locales a 1
-		  sym.local_address = 1;
-                } f_body 
-                {
-		  // Libération du contexte de symbole du corps de la fonction
-		  sym_pop(&sym);
-                }
+f_definition	: f_declaration f_body {
+			struct element * element = find_sym(&sym,$1);
+			// La fonction est desormais initialisee
+			element->initialized = 1;
+		}
 		;
 		
-f_body	: tACCO instructions tACCC {}
-		| tACCO instructions return tACCC {}
-		;
+f_body	: tACCO instructions tACCC {
+		fprintf(file_out,"PUSH ebp");
+		fprintf(file_out,"AFC ebp esp");
 
-return	: tRETURN expr {$$ = $2;}
+	}
 	;
+
+	/*return	: tRETURN expr {$$ = $2;}
+	;*/
 
 if	: tIF test bloc_instructions {}
 	| tIF test instruction {/* Il faut au moins une instruction apres un if */}
@@ -176,7 +221,7 @@ condition	: expr {fprintf(file_out,"%s %d %d\n","EQ",$1,0);}
 		;
 
 printf	: tPRINTF tPARO tWORD tPARC {
-		fprintf(file_out,"PRI [ebp]-%d\n", get_address(&sym,$3));
+		fprintf(file_out,"PRI %d\n", get_address(&sym,$3));
 	}
 	;
 %%
