@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdarg.h>
 #include "sym.h"
+
+// Fichier ou compiler
+extern FILE *file_out;
 
 /**
  * Incrémente la taille de la table des symboles
@@ -40,6 +44,8 @@ int create_sym(struct t_sym *sym) {
   sym->context_stack_size = SIZE_STEP;
   // Le premier index est a -1 : la pile est vide
   sym->context_stack_head = -1;
+  // On a rien compilé
+  sym->program_counter = -1;
   return 0;
 }
 
@@ -166,4 +172,13 @@ int sym_pop(struct t_sym *sym) {
 int change_current_type(struct t_sym *sym, enum types t) {
   sym->current_type = t;
   return 0;
+}
+
+void compile(struct t_sym *sym, const char *format, ...) {
+  va_list args;
+  va_start (args, format);
+  vfprintf(file_out, format, args);
+  va_end(args);
+  // Incrementation du compteur d'adresses du programme
+  sym->program_counter++;
 }

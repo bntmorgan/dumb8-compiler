@@ -134,9 +134,17 @@ int get_address(struct t_sym *sym, char *name);
  * Change le type de symbole courant pour le symbole t.
  *
  * @param t Nouveau type courant : T_INT ou T_FUN
- * @return 0 si le changement s'est bien deroule:w
-
+ * @return 0 si le changement s'est bien deroule
  */
 int change_current_type(struct t_sym *sym, enum types t);
+
+/**
+ * Compile a line
+ * 
+ * @param symbol table
+ * @param format printf format
+ * @param Arguments a afficher
+ */
+void compile(struct t_sym *sym, const char *format, ...);
 
 #endif//__SYM_H__

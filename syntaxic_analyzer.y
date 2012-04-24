@@ -76,9 +76,9 @@ declaration : tWORD tEQ tINTEGER {
 		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
-		    fprintf(file_out,"SOU esp esp 1\n");
+		    compile(&sym,"SOU esp esp 1\n");
 		    // Initialication de la variable
-                    fprintf(file_out,"COP [ebp]-%d %d\n", elt->address, $3);
+                    compile(&sym,"COP [ebp]-%d %d\n", elt->address, $3);
 
             } 
             | tWORD {
@@ -89,7 +89,7 @@ declaration : tWORD tEQ tINTEGER {
     		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
-		    fprintf(file_out,"SOU esp esp 1\n");
+		    compile(&sym,"SOU esp esp 1\n");
 
 	    }
 	    ;
@@ -174,7 +174,7 @@ f_call	: tWORD tPARO parameters_call tPARC {
 				if (adr == -1) {
 				   	fprintf(stderr, "Error : uninitialized fonction\n");
 				} else {
-				     	fprintf(file_out, "CAL %d\n", adr);
+				     	compile(&sym, "CAL %d\n", adr);
 				}
 			}
 		}
@@ -219,8 +219,8 @@ f_definition	: f_declaration
 		;
 		
 f_body	: tACCO instructions tACCC {
-		fprintf(file_out,"PUSH ebp\n");
-		fprintf(file_out,"AFC ebp esp\n");
+		compile(&sym,"PUSH ebp\n");
+		compile(&sym,"AFC ebp esp\n");
 
 	}
 	;
@@ -246,14 +246,14 @@ while	: tWHILE test bloc_instructions {}
 test	: tPARO condition tPARC {}
 	;
 
-condition	: expr {fprintf(file_out,"%s %d %d\n","EQ",$1,0);}
-		| expr tEQ tEQ expr {fprintf(file_out,"%s %d %d\n","EQ",$1,$4);}
-		| expr tSUP expr {fprintf(file_out,"%s %d %d\n", "SUP",$1,$3);}
-		| expr tINF expr {fprintf(file_out,"%s %d %d\n", "INF",$1,$3);}
+condition	: expr {compile(&sym,"%s %d %d\n","EQ",$1,0);}
+		| expr tEQ tEQ expr {compile(&sym,"%s %d %d\n","EQ",$1,$4);}
+		| expr tSUP expr {compile(&sym,"%s %d %d\n", "SUP",$1,$3);}
+		| expr tINF expr {compile(&sym,"%s %d %d\n", "INF",$1,$3);}
 		;
 
 printf	: tPRINTF tPARO tWORD tPARC {
-		fprintf(file_out,"PRI [ebp]-%d\n", get_address(&sym,$3));
+		compile(&sym,"PRI [ebp]-%d\n", get_address(&sym,$3));
 	}
 	;
 %%
@@ -268,6 +268,7 @@ int main(int argc, char **argv) {
   do_options(argc, argv);
   yyparse();
   print_sym(&sym);
+  printf("Dernière addresse du programme : %d\n", sym.program_counter);
   free_sym(&sym);
   close_files();
   return 0;  
