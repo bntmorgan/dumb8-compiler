@@ -211,6 +211,8 @@ f_definition	: f_declaration
 		  	struct element * element = find_sym(&sym,$1);
 		  	// La fonction est desormais initialisee
 		 	element->initialized = 1;
+			// On donne l'addresse de la fonction
+			element->address = sym.program_counter + 1;
 
                 }
 		f_body {

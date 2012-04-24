@@ -92,23 +92,26 @@ struct element* add_sym(struct t_sym *sym, char *name) {
 
 void print_sym(struct t_sym *sym) {
   int i;
-  printf("---------------- TABLE DES SYMBOLES ----------------\n");
-  printf("| Taille : %39d |\n", sym->size);
-  printf("| Index : %40d |\n", sym->idx);
-  printf("----------------------------------------------------\n");
-  printf("| Variables déclarées :                            |\n");
-  printf("----------------------------------------------------\n");
+  printf("---------------------- TABLE DES SYMBOLES ----------------------\n");
+  printf("| Taille : %51d |\n", sym->size);
+  printf("| Index : %52d |\n", sym->idx);
+  printf("----------------------------------------------------------------\n");
+  printf("| Variables déclarées :                                        |\n");
+  printf("----------------------------------------------------------------\n");
   for (i = 0; i < sym->idx; i++) {
     if (sym->t[i].type == T_INT) {
-      printf("| Nom : %20s | type : %d | init : %d |\n", sym->t[i].name, sym->t[i].type, sym->t[i].initialized);
+      printf("| Nom : %22s | type : %d | init : %d | adr : %d |\n", sym->t[i].name, sym->t[i].type, sym->t[i].initialized, sym->t[i].address);
     }
   }
+  printf("----------------------------------------------------------------\n");
+  printf("| Fonctions déclarées :                                        |\n");
+  printf("----------------------------------------------------------------\n");
   for (i = 0; i < sym->idx; i++) {
     if (sym->t[i].type == T_FUN) {
-      printf("| Nom : %7s | nb arg : %d | type : %d | init : %d |\n", sym->t[i].name, sym->t[i].nb_parameters, sym->t[i].type, sym->t[i].initialized);
+      printf("| Nom : %9s | nb arg : %d | type : %d | init : %d | adr : %d |\n", sym->t[i].name, sym->t[i].nb_parameters, sym->t[i].type, sym->t[i].initialized, sym->t[i].address);
     }  
   }
-  printf("----------------------------------------------------\n");
+  printf("-----------------------------------------------------------------\n");
 }
 
 struct element* find_sym(struct t_sym *sym, char *name) {
