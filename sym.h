@@ -10,7 +10,8 @@
  * Les types de la table des symboles
  */
 enum types {
-  T_INT
+  T_INT = 0,
+  T_FUN = 2
 };
 
 /**
@@ -28,7 +29,8 @@ struct element {
   char *name;
   int type;
   int address; // Adresse de la variable : ebp - x pour var (!! x positif), adresse pour fonction
-  int initialized; // Drapeau de variable initialisée
+  int initialized; // Drapeau de variable initialisée (1 si init, 0 sinon)
+  int nb_parameters; // Nb de parametres d'une fonction
 };
 
 /**
@@ -127,5 +129,14 @@ int get_sym_idx(struct t_sym *sym);
  * n'est pas dans la table
  */
 int get_address(struct t_sym *sym, char *name);
+
+/**
+ * Change le type de symbole courant pour le symbole t.
+ *
+ * @param t Nouveau type courant : T_INT ou T_FUN
+ * @return 0 si le changement s'est bien deroule:w
+
+ */
+int change_current_type(struct t_sym *sym, enum types t);
 
 #endif//__SYM_H__
