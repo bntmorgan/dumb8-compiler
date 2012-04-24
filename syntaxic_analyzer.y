@@ -221,7 +221,7 @@ f_definition	: f_declaration
 		;
 		
 f_body	: tACCO instructions tACCC {
-		compile(&sym, "PUSH ebp\n");
+		compile(&sym, "PSH ebp\n");
 		compile(&sym, "AFC ebp esp\n");
 	}
 	;
