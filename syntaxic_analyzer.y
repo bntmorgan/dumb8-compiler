@@ -155,19 +155,19 @@ parameters_call	: tWORD tCOMMA parameters_call {
 		;
 
 f_call	: tWORD tPARO parameters_call tPARC {
-		struct element * element = find_sym(&sym,$1);
+		struct element * element = find_sym(&sym, $1);
 		if (element != NULL) {
-		        printf("Function %s -> %d\n",$1,element->nb_parameters);
+		        printf("Function %s -> %d\n", $1, element->nb_parameters);
 			// Verification de l'initialisation de la fonction
 			if (element->initialized == 0) {
-			   	printf("Function %s is not initialized.\n",$1);			     }
+			   	printf("Function %s is not initialized.\n", $1);			     
 			// Verification du nombre d'argument
-			if ((element->nb_parameters) > $3) {
-				printf("Too many arguments in function : %s\n",$1);
+			} else if ((element->nb_parameters) > $3) {
+				printf("Too many arguments in function : %s\n", $1);
 			} else if ((element->nb_parameters) < $3) {
-				printf("Too few arguments in function : %s\n",$1);
+				printf("Too few arguments in function : %s\n", $1);
 			} else {
-				printf("Function call ok -> %s has %d parameters\n",$1,element->nb_parameters);
+				printf("Function call ok -> %s has %d parameters\n", $1, element->nb_parameters);
 				// Appel de la fonction
 				int adr = get_address(&sym, $1);
 				// On teste si la fonction est bien initialisée
@@ -208,12 +208,12 @@ f_definition	: f_declaration
 		  	// On doit redémarrer les adresses locales a 1
 		  	sym.local_address = 1;
 		  	// TODO adresse de la fonction
-		  	struct element * element = find_sym(&sym,$1);
+		  	struct element * element = find_sym(&sym, $1);
 		  	// La fonction est desormais initialisee
 		 	element->initialized = 1;
 			// On donne l'addresse de la fonction
 			element->address = sym.program_counter + 1;
-
+			printf("ADDRESS %d \n", element->address);
                 }
 		f_body {
 		        sym_pop(&sym);
@@ -221,9 +221,8 @@ f_definition	: f_declaration
 		;
 		
 f_body	: tACCO instructions tACCC {
-		compile(&sym,"PUSH ebp\n");
-		compile(&sym,"AFC ebp esp\n");
-
+		compile(&sym, "PUSH ebp\n");
+		compile(&sym, "AFC ebp esp\n");
 	}
 	;
 
