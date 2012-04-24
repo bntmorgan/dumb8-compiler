@@ -247,10 +247,11 @@ while	: tWHILE test bloc_instructions {}
 test	: tPARO condition tPARC {}
 	;
 
-condition	: expr {compile(&sym,"%s %d %d\n","EQU",$1,0);}
-		| expr tEQ tEQ expr {compile(&sym,"%s %d %d\n","EQU",$1,$4);}
-		| expr tSUP expr {compile(&sym,"%s %d %d\n", "SUP",$1,$3);}
-		| expr tINF expr {compile(&sym,"%s %d %d\n", "INF",$1,$3);}
+/* Faux cf specs assembleur */
+condition	: expr {/* compile(&sym,"%s %d %d\n","EQU",$1,0); */}
+                | expr tEQ tEQ expr {/* compile(&sym,"%s %d %d\n","EQU",$1,$4); */}
+                | expr tSUP expr {/* compile(&sym,"%s %d %d\n", "SUP",$1,$3); */}
+                | expr tINF expr {/* compile(&sym,"%s %d %d\n", "INF",$1,$3); */}
 		;
 
 printf	: tPRINTF tPARO tWORD tPARC {
