@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdarg.h>
 #include "sym.h"
+
+// Fichier ou compiler
+extern FILE *file_out;
 
 /**
  * Incrémente la taille de la table des symboles
@@ -40,6 +44,10 @@ int create_sym(struct t_sym *sym) {
   sym->context_stack_size = SIZE_STEP;
   // Le premier index est a -1 : la pile est vide
   sym->context_stack_head = -1;
+  // On a rien compilé
+  sym->program_counter = -1;
+  // Première addresse d'une variable locale
+  sym->local_address = 1;
   return 0;
 }
 
@@ -86,23 +94,26 @@ struct element* add_sym(struct t_sym *sym, char *name) {
 
 void print_sym(struct t_sym *sym) {
   int i;
-  printf("---------------- TABLE DES SYMBOLES ----------------\n");
-  printf("| Taille : %39d |\n", sym->size);
-  printf("| Index : %40d |\n", sym->idx);
-  printf("----------------------------------------------------\n");
-  printf("| Variables déclarées :                            |\n");
-  printf("----------------------------------------------------\n");
+  printf("---------------------- TABLE DES SYMBOLES ----------------------\n");
+  printf("| Taille : %51d |\n", sym->size);
+  printf("| Index : %52d |\n", sym->idx);
+  printf("----------------------------------------------------------------\n");
+  printf("| Variables déclarées :                                        |\n");
+  printf("----------------------------------------------------------------\n");
   for (i = 0; i < sym->idx; i++) {
     if (sym->t[i].type == T_INT) {
-      printf("| Nom : %20s | type : %d | init : %d |\n", sym->t[i].name, sym->t[i].type, sym->t[i].initialized);
+      printf("| Nom : %22s | type : %d | init : %d | adr : %d |\n", sym->t[i].name, sym->t[i].type, sym->t[i].initialized, sym->t[i].address);
     }
   }
+  printf("----------------------------------------------------------------\n");
+  printf("| Fonctions déclarées :                                        |\n");
+  printf("----------------------------------------------------------------\n");
   for (i = 0; i < sym->idx; i++) {
     if (sym->t[i].type == T_FUN) {
-      printf("| Nom : %7s | nb arg : %d | type : %d | init : %d |\n", sym->t[i].name, sym->t[i].nb_parameters, sym->t[i].type, sym->t[i].initialized);
+      printf("| Nom : %9s | nb arg : %d | type : %d | init : %d | adr : %d |\n", sym->t[i].name, sym->t[i].nb_parameters, sym->t[i].type, sym->t[i].initialized, sym->t[i].address);
     }  
   }
-  printf("----------------------------------------------------\n");
+  printf("-----------------------------------------------------------------\n");
 }
 
 struct element* find_sym(struct t_sym *sym, char *name) {
@@ -166,4 +177,13 @@ int sym_pop(struct t_sym *sym) {
 int change_current_type(struct t_sym *sym, enum types t) {
   sym->current_type = t;
   return 0;
+}
+
+void compile(struct t_sym *sym, const char *format, ...) {
+  va_list args;
+  va_start (args, format);
+  vfprintf(file_out, format, args);
+  va_end(args);
+  // Incrementation du compteur d'adresses du programme
+  sym->program_counter++;
 }

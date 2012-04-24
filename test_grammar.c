@@ -12,7 +12,6 @@ c = 23+32-5;
 b = a = 5;
 p = c/5;
 
-
 /***Declarations de fonctions*/
 int g();
 int g2(int i, int j);

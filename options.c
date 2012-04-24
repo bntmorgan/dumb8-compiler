@@ -50,7 +50,6 @@ void do_options(int argc, char **argv) {
 
   // Gestion du fichier d'entrée à compiler
   if (optind < argc) {
-    printf("nonopt %s\n", argv[optind]);
     // On sauvegarde l'entrée standard
     stdin_fd = dup(STDIN_FILENO);
     // On ferme le vieux descripteur de fichier
