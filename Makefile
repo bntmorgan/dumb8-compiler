@@ -2,6 +2,7 @@ all : compiler
 
 test : compiler test_grammar.c
 	./compiler -o test_grammar.s test_grammar.c
+	cp test_grammar.s ../asm_interpreter
 
 yacc : syntaxic_analyzer.y
 	yacc -d -o syntaxic_analyzer.c syntaxic_analyzer.y

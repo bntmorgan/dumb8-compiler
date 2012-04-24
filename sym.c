@@ -46,6 +46,8 @@ int create_sym(struct t_sym *sym) {
   sym->context_stack_head = -1;
   // On a rien compilé
   sym->program_counter = -1;
+  // Première addresse d'une variable locale
+  sym->local_address = 1;
   return 0;
 }
 

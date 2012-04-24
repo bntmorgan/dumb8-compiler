@@ -76,9 +76,9 @@ declaration : tWORD tEQ tINTEGER {
 		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
-		    compile(&sym,"SOU esp esp 1\n");
+		    compile(&sym,"SOU esp esp #1\n");
 		    // Initialication de la variable
-                    compile(&sym,"COP [ebp]-%d %d\n", elt->address, $3);
+                    compile(&sym,"AFC [ebp]-%d #%d\n", elt->address, $3);
 
             } 
             | tWORD {
@@ -89,7 +89,7 @@ declaration : tWORD tEQ tINTEGER {
     		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
-		    compile(&sym,"SOU esp esp 1\n");
+		    compile(&sym,"SOU esp esp #1\n");
 
 	    }
 	    ;
@@ -222,7 +222,7 @@ f_definition	: f_declaration
 		
 f_body	: tACCO instructions tACCC {
 		compile(&sym, "PSH ebp\n");
-		compile(&sym, "AFC ebp esp\n");
+		compile(&sym, "COP ebp esp\n");
 	}
 	;
 
