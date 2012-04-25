@@ -53,9 +53,9 @@ instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n")
 			printf ("affectation de variable\n");
 			// Recherche du symbole associe au nom de variable dans la table des symboles
 			//TODO Gerer un flux d'erreur si le symbole n'est pas dans la table
-			struct element * elmt = find_sym(&sym, $1);
-			fprintf(file_out,"POP eax\n");
-			fprintf(file_out,"COP %d eax\n",elmt->address);
+			struct element *elmt = find_sym(&sym, $1);
+			compile(&sym, "POP eax\n");
+			compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
 			// Le symbole est desormais initialise
 			elmt->initialized = 1;
 
@@ -69,22 +69,22 @@ instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n")
 		;
 
 affectations	: tEQ tWORD affectations {
-			struct element * elmt = find_sym(&sym, $2);
+			struct element *elmt = find_sym(&sym, $2);
 			// Dans tous les cas, la derniere valeur de eax est la valeur d'affectation de la variable
 			// Evite un pop de la valeur et un push de cette meme valeur
-			fprintf(file_out,"COP %d eax\n",elmt->address);
+			compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
 			// Le symbole est desormais initialise
 			elmt->initialized = 1;
 		}
 		| tEQ tWORD {
 			//TODO Gerer un flux d'erreur si le symbole n'est pas dans la table
 			int adr = get_address(&sym, $2); 
-			fprintf(file_out,"COP eax %d\n",adr);
-			fprintf(file_out,"PSH eax\n");
+			compile(&sym, "COP eax [epb]-%d\n", adr);
+			compile(&sym, "PSH eax\n");
 		}
 		| tEQ tINTEGER {
-			fprintf(file_out,"AFC eax %d\n",$2);
-			fprintf(file_out,"PSH eax\n");
+			compile(&sym, "AFC eax #%d\n", $2);
+			compile(&sym, "PSH eax\n");
 		}
 		| tEQ expr {
 			// La valeur de l'expression a ete pushee lors de l'evaluation de expr
@@ -103,9 +103,9 @@ declaration : tWORD tEQ tINTEGER {
 		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
-		    compile(&sym,"SOU esp esp #1\n");
+		    compile(&sym, "SOU esp esp #1\n");
 		    // Initialication de la variable
-                    compile(&sym,"AFC [ebp]-%d #%d\n", elt->address, $3);
+                    compile(&sym, "AFC [ebp]-%d #%d\n", elt->address, $3);
             } 
             | tWORD {
    	            // Ajout du symbole dans la table des symboles
@@ -115,7 +115,7 @@ declaration : tWORD tEQ tINTEGER {
     		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
-		    compile(&sym,"SOU esp esp #1\n");
+		    compile(&sym, "SOU esp esp #1\n");
 
 	    }
 	    ;
@@ -124,66 +124,66 @@ expr	: terme {}
 	| tPARO expr tPARC {}
 	| expr {} tADD expr {
 		// Pop ds ebx pour stocker l'expression de gauche (donc premiere sur la pile)
-		fprintf(file_out,"POP ebx\n");
+		compile(&sym, "POP ebx\n");
 		// Pop ds eax pour stocker l'expression de droite
-		fprintf(file_out,"POP eax\n");
+		compile(&sym, "POP eax\n");
 		//Addition des deux registes et stock du resultat dans eax
-		fprintf(file_out,"ADD eax eax ebx\n");
-		fprintf(file_out,"PSH eax\n");
+		compile(&sym, "ADD eax eax ebx\n");
+		compile(&sym, "PSH eax\n");
 	} 
 	| expr {} tSUB expr {
-		fprintf(file_out,"POP ebx\n");
-		fprintf(file_out,"POP eax\n");
-		fprintf(file_out,"SUB eax eax ebx\n");
-		fprintf(file_out,"PSH eax\n");	
+		compile(&sym, "POP ebx\n");
+		compile(&sym, "POP eax\n");
+		compile(&sym, "SOU eax eax ebx\n");
+		compile(&sym, "PSH eax\n");	
 	} 
 	| expr {} tDIV expr {
-		fprintf(file_out,"POP ebx\n");
-		fprintf(file_out,"POP eax\n");
-		fprintf(file_out,"DIV eax eax ebx\n");
-		fprintf(file_out,"PSH eax\n");
+		compile(&sym, "POP ebx\n");
+		compile(&sym, "POP eax\n");
+		compile(&sym, "DIV eax eax ebx\n");
+		compile(&sym, "PSH eax\n");
 	} 
 	| expr {} tSTAR expr {
-		fprintf(file_out,"POP ebx\n");
-		fprintf(file_out,"POP eax\n");
-		fprintf(file_out,"MUL eax eax ebx\n");
-		fprintf(file_out,"PSH eax\n");
+		compile(&sym, "POP ebx\n");
+		compile(&sym, "POP eax\n");
+		compile(&sym, "MUL eax eax ebx\n");
+		compile(&sym, "PSH eax\n");
 	} 
 	;
 
 terme	: tINTEGER {
-		fprintf(file_out,"AFC eax %d\n",$1);
-		fprintf(file_out,"PSH eax\n");
+		compile(&sym, "AFC eax #%d\n",$1);
+		compile(&sym, "PSH eax\n");
 	}
 	| tWORD {
 		int adr = get_address(&sym, $1); 
-		fprintf(file_out,"COP eax %d\n",adr);
-		fprintf(file_out,"PSH eax\n");
+		compile(&sym, "COP eax [ebp]-%d\n", adr);
+		compile(&sym, "PSH eax\n");
 	}
 	;
 
 f_declaration	: tINT tWORD tPARO parameters_decl tPARC {
 			// Le type courant est T_INT par defaut
 			// Changement du type courant de l'element a ajouter a la table
-			change_current_type(&sym,T_FUN);
-			struct element * element = add_sym(&sym, $2);
+			change_current_type(&sym, T_FUN);
+			struct element *element = add_sym(&sym, $2);
 			element->nb_parameters = $4;
 			// La fonction n'est ici pas encore initialisee
 			element->initialized = 0;
 			// Remise à T_INT du type courant
-			change_current_type(&sym,T_INT);
+			change_current_type(&sym, T_INT);
 			// La valeur retour est le nom de la fonction
 			$$ = $2;
 		}
 		| tINT tWORD tPARO tPARC {
 			// Changement du type courant de l'element a ajouter a la table
-			change_current_type(&sym,T_FUN);
+			change_current_type(&sym, T_FUN);
 			struct element *element = add_sym(&sym, $2);
 			element->nb_parameters = 0;
 			// La fonction n'est ici pas encore initialisee
 			element->initialized = 0;
 			// Remise à T_INT du type courant
-			change_current_type(&sym,T_INT);
+			change_current_type(&sym, T_INT);
 			// La valeur retour est le nom de la fonction
 			$$ = $2;
 		}
@@ -239,17 +239,17 @@ f_call	: tWORD tPARO parameters_call tPARC {
 		}
 	}
 	| tWORD tPARO tPARC {
-		struct element * element = find_sym(&sym,$1);
+		struct element *element = find_sym(&sym, $1);
 		if (element != NULL) {
 			// Verification de l'initialisation de la fonction
 			if (element->initialized == 0)
-				printf("Function %s is not initialized.\n",$1);
+				printf("Function %s is not initialized.\n", $1);
 
 			// Verification du nombre d'argument
 			if (element->nb_parameters > 0)
-				printf("Too many arguments in function : %s\n",$1);
+				printf("Too many arguments in function : %s\n", $1);
 			else 
-				printf("Function call ok -> %s has %d parameters\n",$1,0);
+				printf("Function call ok -> %s has %d parameters\n", $1, 0);
 		}
 		else {
 			printf("Function %s is not define\n", $1);
@@ -269,7 +269,6 @@ f_definition	: f_declaration
 		 	element->initialized = 1;
 			// On donne l'addresse de la fonction
 			element->address = sym.program_counter + 1;
-			printf("ADDRESS %d \n", element->address);
                 }
 		f_body {
 		        sym_pop(&sym);
@@ -278,7 +277,6 @@ f_definition	: f_declaration
 		
 f_body	: tACCO instructions tACCC {
 		compile(&sym, "PSH ebp\n");
-		// Q : Pourquoi pas AFC ?
 		compile(&sym, "COP ebp esp\n");
 	}
 	;
@@ -312,7 +310,7 @@ condition	: expr {/* compile(&sym,"%s %d %d\n","EQU",$1,0); */}
 		;
 
 printf	: tPRINTF tPARO tWORD tPARC {
-		compile(&sym,"PRI [ebp]-%d\n", get_address(&sym,$3));
+		compile(&sym, "PRI [ebp]-%d\n", get_address(&sym, $3));
 	}
 	;
 %%
