@@ -103,7 +103,8 @@ declaration : tWORD tEQ tINTEGER {
 		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
-		    compile(&sym, "SOU esp esp #1\n");
+		    compile(&sym, "AFC eax #1\n");
+		    compile(&sym, "SOU esp esp eax\n");
 		    // Initialication de la variable
                     compile(&sym, "AFC [ebp]-%d #%d\n", elt->address, $3);
             } 
@@ -115,7 +116,8 @@ declaration : tWORD tEQ tINTEGER {
     		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
-		    compile(&sym, "SOU esp esp #1\n");
+		    compile(&sym, "AFC eax #1\n");
+		    compile(&sym, "SOU esp esp eax\n");
 
 	    }
 	    ;
