@@ -24,11 +24,14 @@ struct t_sym sym;
 
 %token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
-%type <entier> expr terme condition parameters_decl parameters_call
+%type <entier> expr condition parameters_decl parameters_call
 %type <chaine> f_declaration
 
-%left tADD tSUB
+// Définition des associativités par ordre croissant de priorité
+%right tEQ
+%left tADD tSUB 
 %left tSTAR tDIV
+%right tIF tELSE
 
 // Axiome
 %start instructions
@@ -122,9 +125,8 @@ declaration : tWORD tEQ tINTEGER {
 	    }
 	    ;
 
-expr	: terme {}
-	| tPARO expr tPARC {}
-	| expr {} tADD expr {
+expr	: tPARO expr tPARC {}
+		| expr {} tADD expr {
 		// Pop ds ebx pour stocker l'expression de gauche (donc premiere sur la pile)
 		compile(&sym, "POP ebx\n");
 		// Pop ds eax pour stocker l'expression de droite
@@ -151,9 +153,7 @@ expr	: terme {}
 		compile(&sym, "MUL eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
 	} 
-	;
-
-terme	: tINTEGER {
+	| tINTEGER {
 		compile(&sym, "AFC eax #%d\n",$1);
 		compile(&sym, "PSH eax\n");
 	}
@@ -294,7 +294,6 @@ if	: tIF test bloc_instructions {}
 
 else	: tELSE bloc_instructions {}
 	| tELSE instruction {/* Il faut au moins une instruction apres un else */}
-	| tELSE if {/* Cas du else if */}
 	;
 
 while	: tWHILE test bloc_instructions {}
