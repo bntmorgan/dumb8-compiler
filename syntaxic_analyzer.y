@@ -22,16 +22,17 @@ struct t_sym sym;
 %token <entier> tINTEGER
 %token <chaine> tWORD
 
-%token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
+%token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEQEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
-%type <entier> expr condition parameters_decl parameters_call
+%type <entier> expr parameters_decl parameters_call terme
 %type <chaine> f_declaration
 
 // Définition des associativités par ordre croissant de priorité
 %right tEQ
 %left tADD tSUB 
 %left tSTAR tDIV
-%right tIF tELSE
+%nonassoc	tEQEQ  tINF tSUP
+%right tELSE
 
 // Axiome
 %start instructions
@@ -79,16 +80,6 @@ affectations	: tEQ tWORD affectations {
 			// Le symbole est desormais initialise
 			elmt->initialized = 1;
 		}
-		| tEQ tWORD {
-			//TODO Gerer un flux d'erreur si le symbole n'est pas dans la table
-			int adr = get_address(&sym, $2); 
-			compile(&sym, "COP eax [epb]-%d\n", adr);
-			compile(&sym, "PSH eax\n");
-		}
-		| tEQ tINTEGER {
-			compile(&sym, "AFC eax #%d\n", $2);
-			compile(&sym, "PSH eax\n");
-		}
 		| tEQ expr {
 			// La valeur de l'expression a ete pushee lors de l'evaluation de expr
 		}
@@ -98,20 +89,21 @@ declarations : declaration tCOMMA declarations {}
 	     | declaration {}
 	     ; 
 
-declaration : tWORD tEQ tINTEGER {
+declaration : tWORD affectations {
                     // Ajout du symbole dans la table des symboles
-                    struct element *elt = add_sym(&sym, $1);
+                    struct element *elmt = add_sym(&sym, $1);
 		    // On donne l'adresse à la variable locale
-		    elt->address = sym.local_address;
+		    elmt->address = sym.local_address;
 		    // Incrementation des adresses locales
 		    sym.local_address++;
 		    // On décale esp de 4 octets allocation de la variable
 		    compile(&sym, "AFC eax #1\n");
 		    compile(&sym, "SOU esp esp eax\n");
 		    // Initialication de la variable
-                    compile(&sym, "AFC [ebp]-%d #%d\n", elt->address, $3);
+				compile(&sym, "POP eax\n");
+				compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
             } 
-            | tWORD {
+		| tWORD {
    	            // Ajout du symbole dans la table des symboles
                     struct element *elt = add_sym(&sym, $1);
 		    // On donne l'adresse à la variable locale
@@ -122,11 +114,11 @@ declaration : tWORD tEQ tINTEGER {
 		    compile(&sym, "AFC eax #1\n");
 		    compile(&sym, "SOU esp esp eax\n");
 
-	    }
-	    ;
+	  }
+	  ;
 
-expr	: tPARO expr tPARC {}
-		| expr {} tADD expr {
+expr	: terme {}
+	| expr {} tADD expr {
 		// Pop ds ebx pour stocker l'expression de gauche (donc premiere sur la pile)
 		compile(&sym, "POP ebx\n");
 		// Pop ds eax pour stocker l'expression de droite
@@ -153,6 +145,27 @@ expr	: tPARO expr tPARC {}
 		compile(&sym, "MUL eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
 	} 
+	| expr tEQEQ expr {
+		compile(&sym, "POP ebx\n");
+		compile(&sym, "POP eax\n");
+		compile(&sym, "EQU eax eax ebx\n");
+		compile(&sym, "PSH eax\n");
+	}
+	| expr tSUP expr {
+		compile(&sym, "POP ebx\n");
+		compile(&sym, "POP eax\n");
+		compile(&sym, "SUP eax eax ebx\n");
+		compile(&sym, "PSH eax\n");
+	}
+  | expr tINF expr {
+		compile(&sym, "POP ebx\n");
+		compile(&sym, "POP eax\n");
+		compile(&sym, "INF eax eax ebx\n");
+		compile(&sym, "PSH eax\n");
+	}
+	;
+
+terme : tPARO expr tPARC {}
 	| tINTEGER {
 		compile(&sym, "AFC eax #%d\n",$1);
 		compile(&sym, "PSH eax\n");
@@ -286,30 +299,22 @@ f_body	: tACCO instructions tACCC {
 	/*return	: tRETURN expr {$$ = $2;}
 	;*/
 
-if	: tIF test bloc_instructions {}
-	| tIF test instruction {/* Il faut au moins une instruction apres un if */}
-	| tIF test bloc_instructions else {/* Cas d'un if-else */}
-	| tIF test instruction else {}
+if	: tIF tPARO expr tPARC bloc_instructions {}
+	| tIF tPARO expr tPARC instruction {/* Il faut au moins une instruction apres un if */}
+	| tIF tPARO expr tPARC bloc_instructions else {/* Cas d'un if-else */}
+	| tIF tPARO expr tPARC instruction else {}
 	;
 
 else	: tELSE bloc_instructions {}
-	| tELSE instruction {/* Il faut au moins une instruction apres un else */}
+	| tELSE instruction {
+		/* Il faut au moins une instruction apres un else */
+	}
 	;
 
-while	: tWHILE test bloc_instructions {}
-	| tWHILE test instruction {}
+while	: tWHILE tPARO expr tPARC bloc_instructions {}
+	| tWHILE tPARO expr tPARC instruction {}
 	;
-
-test	: tPARO condition tPARC {}
-	;
-
-/* Faux cf specs assembleur */
-condition	: expr {/* compile(&sym,"%s %d %d\n","EQU",$1,0); */}
-                | expr tEQ tEQ expr {/* compile(&sym,"%s %d %d\n","EQU",$1,$4); */}
-                | expr tSUP expr {/* compile(&sym,"%s %d %d\n", "SUP",$1,$3); */}
-                | expr tINF expr {/* compile(&sym,"%s %d %d\n", "INF",$1,$3); */}
-		;
-
+		
 printf	: tPRINTF tPARO tWORD tPARC {
 		compile(&sym, "PRI [ebp]-%d\n", get_address(&sym, $3));
 	}

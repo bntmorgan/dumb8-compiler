@@ -25,6 +25,7 @@ if			{return tIF;}
 else			{return tELSE;}
 while			{return tWHILE;}
 {INTEGER}	        {yylval.entier = atoi(yytext); return tINTEGER;}
+==			{return tEQEQ;}
 =			{return tEQ;}
 "!"			{return tEXCL;}
 {WORD}			{yylval.chaine = strdup(yytext) ; return tWORD;}

@@ -1,7 +1,7 @@
 /****FICHIER DE TESTS*/
 
 /****Declarations*/
-int a = 20;
+int a = 20+8;
 int b = 46;
 int c = 3;
 int p = 0;
