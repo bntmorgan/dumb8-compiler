@@ -46,7 +46,9 @@ instructions 	: instruction instructions {}
 	 	| bloc_instructions instructions {}
 		| tSEMICOLON instructions {}
 		| tSEMICOLON bloc_instructions {}
-	     	| {}
+		| instruction  {}
+	 	| bloc_instructions  {}
+		| tSEMICOLON  {}
 	     	;
 
 bloc_instructions	: tACCO {sym_push(&sym);} instructions tACCC {sym_pop(&sym);}
@@ -118,7 +120,7 @@ declaration : tWORD affectations {
 	  ;
 
 expr	: terme {}
-	| expr {} tADD expr {
+	| expr tADD expr {
 		// Pop ds ebx pour stocker l'expression de gauche (donc premiere sur la pile)
 		compile(&sym, "POP ebx\n");
 		// Pop ds eax pour stocker l'expression de droite
@@ -127,19 +129,19 @@ expr	: terme {}
 		compile(&sym, "ADD eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
 	} 
-	| expr {} tSUB expr {
+	| expr tSUB expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "SOU eax eax ebx\n");
 		compile(&sym, "PSH eax\n");	
 	} 
-	| expr {} tDIV expr {
+	| expr tDIV expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "DIV eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
 	} 
-	| expr {} tSTAR expr {
+	| expr tSTAR expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "MUL eax eax ebx\n");
@@ -213,16 +215,11 @@ parameters_decl	: tINT tWORD tCOMMA parameters_decl {
 		}
 		;
 
-parameters_call	: tWORD tCOMMA parameters_call {
+parameters_call	: terme tCOMMA parameters_call {
 			// Incrementation du compteur du nombre de parametres
 			$$ = $3 +1;
 		}
-		| tINTEGER tCOMMA parameters_call {
-			// Incrementation du compteur du nombre de parametres
-			$$ = $3 +1;
-		}
-		| tWORD { $$ = 1; }
-		| tINTEGER {$$ = 1; }
+		| terme {$$ = 1;}
 		;
 
 f_call	: tWORD tPARO parameters_call tPARC {
