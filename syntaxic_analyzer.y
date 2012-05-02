@@ -57,19 +57,22 @@ instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n")
 		| tWORD affectations tSEMICOLON {
 			printf ("affectation de variable\n");
 			// Recherche du symbole associe au nom de variable dans la table des symboles
-			//TODO Gerer un flux d'erreur si le symbole n'est pas dans la table
 			struct element *elmt = find_sym(&sym, $1);
-			compile(&sym, "POP eax\n");
-			compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
-			// Le symbole est desormais initialise
-			elmt->initialized = 1;
-
+			if (elmt = NULL) {
+				fprintf(stderr, "Error : uninitialized symbol : %s.\n", $1);			     
+			}
+			else {
+				compile(&sym, "POP eax\n");
+				compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
+				// Le symbole est desormais initialise
+				elmt->initialized = 1;
+			}
 		}
 		| f_declaration tSEMICOLON {printf("declaration de fonction\n");}
 		| f_call tSEMICOLON {printf("appel de fonction\n");}
 		| f_definition tSEMICOLON {printf("definition de fonction\n");}
 		| printf tSEMICOLON {printf("affichage d'une variable\n");}
-                | if {/* /!\ les if et les while sont des instructions qui ne finissent pas necessairement par un semicolon*/printf("if\n");} 
+                | if {printf("if\n");} 
 		| while {printf("while\n");}
                 | tSEMICOLON
 		;
@@ -102,20 +105,16 @@ declaration : tWORD affectations {
 		    compile(&sym, "AFC eax #1\n");
 		    compile(&sym, "SOU esp esp eax\n");
 		    // Initialication de la variable
-				compile(&sym, "POP eax\n");
-				compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
+		    compile(&sym, "POP eax\n");
+		    compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
             } 
-		| tWORD {
+	    | tWORD {
    	            // Ajout du symbole dans la table des symboles
                     struct element *elt = add_sym(&sym, $1);
 		    // On donne l'adresse à la variable locale
 		    elt->address = sym.local_address;
     		    // Incrementation des adresses locales
 		    sym.local_address++;
-		    // On décale esp de 4 octets allocation de la variable
-		    compile(&sym, "AFC eax #1\n");
-		    compile(&sym, "SOU esp esp eax\n");
-
 	  }
 	  ;
 
@@ -228,26 +227,27 @@ f_call	: tWORD tPARO parameters_call tPARC {
 		        printf("Function %s -> %d\n", $1, element->nb_parameters);
 			// Verification de l'initialisation de la fonction
 			if (element->initialized == 0) {
-			   	printf("Function %s is not initialized.\n", $1);			     
+			   	fprintf(stderr, "Error : function `%s` is not initialized.\n", $1);			     
 			// Verification du nombre d'argument
 			} else if ((element->nb_parameters) > $3) {
-				printf("Too many arguments in function : %s\n", $1);
+				fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
 			} else if ((element->nb_parameters) < $3) {
-				printf("Too few arguments in function : %s\n", $1);
+				fprintf(stderr, "Error : too few arguments to function '%s'\n", $1);
 			} else {
 				printf("Function call ok -> %s has %d parameters\n", $1, element->nb_parameters);
 				// Appel de la fonction
 				int adr = get_address(&sym, $1);
 				// On teste si la fonction est bien initialisée
 				if (adr == -1) {
-				   	fprintf(stderr, "Error : uninitialized fonction\n");
+				   	fprintf(stderr, "Error : uninitialized function '%s'\n",$1);
 				} else {
+					//Appel de la fonction (i.e jump à adr)
 				     	compile(&sym, "CAL %d\n", adr);
 				}
 			}
 		}
 		else {
-			printf("Function %s is not defined\n", $1);
+			fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
 		}
 	}
 	| tWORD tPARO tPARC {
@@ -255,16 +255,16 @@ f_call	: tWORD tPARO parameters_call tPARC {
 		if (element != NULL) {
 			// Verification de l'initialisation de la fonction
 			if (element->initialized == 0)
-				printf("Function %s is not initialized.\n", $1);
+				fprintf(stderr, "Error : uninitialized function '%s'\n",$1);
 
 			// Verification du nombre d'argument
 			if (element->nb_parameters > 0)
-				printf("Too many arguments in function : %s\n", $1);
+				fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
 			else 
 				printf("Function call ok -> %s has %d parameters\n", $1, 0);
 		}
 		else {
-			printf("Function %s is not define\n", $1);
+			fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
 		}
 	}	
 	;
