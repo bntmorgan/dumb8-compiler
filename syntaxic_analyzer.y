@@ -4,6 +4,8 @@
 #include <string.h>
 #include "options.h"
 #include "sym.h"
+
+extern int line;
   
 void yyerror(char *s);
 
@@ -51,7 +53,8 @@ instructions 	: instruction instructions {}
 	     	;
 
 bloc_instructions	: tACCO {sym_push(&sym);} instructions tACCC {sym_pop(&sym);}
-			;
+			| tACCO tACCC
+                        ;
 
 instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n");}
 		| tWORD affectations tSEMICOLON {
@@ -319,7 +322,7 @@ printf	: tPRINTF tPARO tWORD tPARC {
 %%
 
 void yyerror(char *s) {
-  fprintf(stderr, "Vous ne maîtrisez pas les concepts : %s\n", s);
+  fprintf(stderr, "Vous ne maîtrisez pas les concepts : %s at line %d\n", s, line);
 }
 
 int main(int argc, char **argv) {
