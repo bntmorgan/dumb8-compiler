@@ -39,17 +39,26 @@ struct t_sym sym;
 %nonassoc tELSE
 
 // Axiome
-%start instructions
+%start instructions_top
 
 // Declaration du type des non terminaux qui ne sont pas des entiers
 // %type <nom_de_type> non_terminal
 
 %%
 
+instructions_top : instruction instructions_top {}
+                 | bloc_instructions instructions_top {}
+		 | f_definition tSEMICOLON instructions_top {}
+                 | f_declaration tSEMICOLON instructions_top {}
+                 | instruction {}
+                 | bloc_instructions {}
+		 | f_definition tSEMICOLON {}
+                 | f_declaration tSEMICOLON {}
+
 instructions 	: instruction instructions {}
 	 	| bloc_instructions instructions {}
-		| instruction  {}
-	 	| bloc_instructions  {}
+		| instruction {}
+	 	| bloc_instructions {}
 	     	;
 
 bloc_instructions	: tACCO {sym_push(&sym);} instructions tACCC {sym_pop(&sym);}
@@ -66,11 +75,8 @@ instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n")
 			compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
 			// Le symbole est desormais initialise
 			elmt->initialized = 1;
-
-		}
-		| f_declaration tSEMICOLON {printf("declaration de fonction\n");}
+                }
 		| f_call tSEMICOLON {printf("appel de fonction\n");}
-		| f_definition tSEMICOLON {printf("definition de fonction\n");}
 		| printf tSEMICOLON {printf("affichage d'une variable\n");}
                 | if {/* /!\ les if et les while sont des instructions qui ne finissent pas necessairement par un semicolon*/printf("if\n");} 
 		| while {printf("while\n");}
