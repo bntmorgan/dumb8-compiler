@@ -26,7 +26,7 @@ int h(){f(x);};
 int h2(int i, int j){int yy=3;};
 
 /***Bloc*/
-{int h(); int z=3;}
+{int z=3;}
 
 /***If*/
 if (1>5) {}

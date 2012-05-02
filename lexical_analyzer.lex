@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "syntaxic_analyzer.h"
+
+int line = 1;
+
 %}
  
 DIGIT [0-9]
@@ -15,7 +18,8 @@ WORD [a-zA-Z0-9_]+
 %%
 
 "/*"			{BEGIN COMMENT;}
-<COMMENT>[.|\n]*	{}
+<COMMENT>\n             {line++;}
+<COMMENT>[.]*           {}
 <COMMENT>"*/"		{BEGIN INITIAL;printf("\n");}
 
 int			{return tINT;}
@@ -43,7 +47,7 @@ while			{return tWHILE;}
 "."			{return tDOT;}
 ,			{return tCOMMA;}
 {WHITESPACE}		{}
-\n			{}
+\n			{line++;}
 .			{return tERROR;}
 
 %%
