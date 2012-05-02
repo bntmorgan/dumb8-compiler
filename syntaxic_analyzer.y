@@ -32,7 +32,9 @@ struct t_sym sym;
 %left tADD tSUB 
 %left tSTAR tDIV
 %nonassoc tEQEQ tINF tSUP
-%left IF_ELSE
+
+%nonassoc LOWER_THAN_ELSE
+%nonassoc tELSE
 
 // Axiome
 %start instructions
@@ -67,8 +69,7 @@ instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n")
 		| f_call tSEMICOLON {printf("appel de fonction\n");}
 		| f_definition tSEMICOLON {printf("definition de fonction\n");}
 		| printf tSEMICOLON {printf("affichage d'une variable\n");}
-                | if %prec IF_ELSE
-		| if else{/* /!\ les if et les while sont des instructions qui ne finissent pas necessairement par un semicolon*/printf("if\n");} 
+                | if {/* /!\ les if et les while sont des instructions qui ne finissent pas necessairement par un semicolon*/printf("if\n");} 
 		| while {printf("while\n");}
                 | tSEMICOLON
 		;
@@ -295,8 +296,10 @@ f_body	: tACCO instructions tACCC {
 	/*return	: tRETURN expr {$$ = $2;}
 	;*/
 
-if	: tIF tPARO expr tPARC bloc_instructions {}
-	| tIF tPARO expr tPARC instruction {/* Il faut au moins une instruction apres un if */}
+if	: tIF tPARO expr tPARC bloc_instructions {} %prec LOWER_THAN_ELSE 
+	| tIF tPARO expr tPARC instruction {/* Il faut au moins une instruction apres un if */} %prec LOWER_THAN_ELSE 
+	| tIF tPARO expr tPARC bloc_instructions else {}
+	| tIF tPARO expr tPARC instruction else {/* Il faut au moins une instruction apres un if */}
 	;
 
 else	: tELSE bloc_instructions {}
