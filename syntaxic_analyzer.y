@@ -314,10 +314,12 @@ f_body	: tACCO {
 	/*return	: tRETURN expr {$$ = $2;}
 	;*/
 
-if	: tIF tPARO expr tPARC bloc_instructions {} %prec LOWER_THAN_ELSE 
-	| tIF tPARO expr tPARC instruction {/* Il faut au moins une instruction apres un if */} %prec LOWER_THAN_ELSE 
-	| tIF tPARO expr tPARC bloc_instructions else {}
-	| tIF tPARO expr tPARC instruction else {/* Il faut au moins une instruction apres un if */}
+if	: tIF tPARO expr {
+                compile(&sym, "POP eax\n");
+	} tPARC bloc_instructions {} %prec LOWER_THAN_ELSE 
+        | tIF tPARO expr {} tPARC instruction {/* Il faut au moins une instruction apres un if */} %prec LOWER_THAN_ELSE 
+	| tIF tPARO expr {} tPARC bloc_instructions else {}
+	| tIF tPARO expr {} tPARC instruction else {/* Il faut au moins une instruction apres un if */}
 	;
 
 else	: tELSE bloc_instructions {}
