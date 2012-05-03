@@ -22,7 +22,7 @@ g2(i,j);
 f2(aa, bb, 5, 12);
 
 /***Definitions de fonctions*/
-int h(){f(x);};
+int h(){f(x);}
 int h2(int i, int j){int yy=3;};
 
 /***Bloc*/

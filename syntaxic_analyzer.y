@@ -14,6 +14,7 @@ struct t_sym sym;
 
 %}
 
+%error-verbose
 // Declaration des types utilisés
 %union {
   int entier;
@@ -48,12 +49,13 @@ struct t_sym sym;
 
 instructions_top : instruction instructions_top {}
                  | bloc_instructions instructions_top {}
-		 | f_definition tSEMICOLON instructions_top {}
+		 | f_definition instructions_top {}
                  | f_declaration tSEMICOLON instructions_top {}
                  | instruction {}
                  | bloc_instructions {}
-		 | f_definition tSEMICOLON {}
+		 | f_definition {}
                  | f_declaration tSEMICOLON {}
+                 ;
 
 instructions 	: instruction instructions {}
 	 	| bloc_instructions instructions {}
@@ -279,27 +281,33 @@ f_call	: tWORD tPARO parameters_call tPARC {
 	}	
 	;
 
-f_definition	: f_declaration 
-		{
+f_definition	: f_declaration {
 			// On stocke le contexte de symbole courant
 		  	sym_push(&sym);
 		  	// On doit redémarrer les adresses locales a 1
 		  	sym.local_address = 1;
-		  	// TODO adresse de la fonction
 		  	struct element * element = find_sym(&sym, $1);
-		  	// La fonction est desormais initialisee
-		 	element->initialized = 1;
-			// On donne l'addresse de la fonction
-			element->address = sym.program_counter + 1;
-                }
+		  	if (element == NULL) {
+				fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
+			}
+			else {
+				// La fonction est desormais initialisee
+		 		element->initialized = 1;
+				// On donne l'addresse de la fonction
+				element->address = sym.program_counter + 1;
+                	}
+		}
 		f_body {
 		        sym_pop(&sym);
 		}
 		;
 		
-f_body	: tACCO instructions tACCC {
+f_body	: tACCO {
 		compile(&sym, "PSH ebp\n");
 		compile(&sym, "COP ebp esp\n");
+	} 
+	instructions tACCC {
+		compile(&sym, "RET\n");
 	}
 	;
 

@@ -8,6 +8,10 @@ test_expr : compiler test_grammar.c
 	./compiler -o test_expr.s test_expr.c
 	cp test_expr.s ../asm_interpreter
 
+test_function : compiler test_function.c
+	./compiler -o test_function.s test_function.c
+	cp test_function.s ../asm_interpreter
+
 yacc : syntaxic_analyzer.y
 	yacc -d -o syntaxic_analyzer.c syntaxic_analyzer.y
 
