@@ -70,7 +70,7 @@ instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n")
 			printf ("affectation de variable\n");
 			// Recherche du symbole associe au nom de variable dans la table des symboles
 			struct element *elmt = find_sym(&sym, $1);
-			if (elmt = NULL) {
+			if (elmt == NULL) {
 				fprintf(stderr, "Error : uninitialized symbol : %s.\n", $1);			     
 			}
 			else {
