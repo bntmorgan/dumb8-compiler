@@ -343,7 +343,7 @@ f_prototype	: tINT tWORD tPARO param_proto tPARC {
 			// ne sert pas à l'initialisation de la fonction
 			sym_push(&sym);
 			compile(&sym, "PSH ebp\n");
-      compile(&sym, "COP ebp esp\n");
+                        compile(&sym, "COP ebp esp\n");
 			printf("Push lors de '%s' prototype.\n", $2);
 			// On doit redémarrer les adresses locales à 1
 			sym.local_address = 1;
@@ -523,6 +523,29 @@ int main(int argc, char **argv) {
   create_sym(&sym);
   do_options(argc, argv);
   yyparse();
+
+  // On compile l'appel au main
+  struct element * element = find_sym(&sym, "main");
+  if (element != NULL) {
+    // Verification de l'initialisation de la fonction
+    if (element->initialized == 0) {
+      fprintf(stderr, "Error : function main is not initialized.\n");
+      // Verification du nombre d'argument
+    } else {
+      // Appel de la fonction
+      int adr = get_address(&sym, "main");
+      // On teste si la fonction est bien initialisée
+      if (adr == -1) {
+	fprintf(stderr, "Error : uninitialized function main\n");
+      } else {
+	// Appel de la fonction (i.e jump à adr)
+	compile(&sym, "CAL %d\n", adr);
+      }
+    }
+  } else {
+    fprintf(stderr, "Error : undefined symbol main\n");
+  }
+
   print_sym(&sym);
   printf("Dernière addresse du programme : %d\n", sym.program_counter);
   free_sym(&sym);
