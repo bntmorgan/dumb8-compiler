@@ -12,6 +12,10 @@ test_function : compiler test_function.c
 	./compiler -o test_function.s test_function.c
 	cp test_function.s ../asm_interpreter
 
+test_main : compiler test_main.c
+	./compiler -o test_main.s test_main.c
+	cp test_main.s ../asm_interpreter
+
 yacc : syntaxic_analyzer.y
 	yacc -d -o syntaxic_analyzer.c syntaxic_analyzer.y -v
 
