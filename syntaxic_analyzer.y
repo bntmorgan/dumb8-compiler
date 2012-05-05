@@ -235,7 +235,7 @@ terme : tPARO expr tPARC {}
 		        compile(&sym, "COP eax [ebp]-%d\n", adr);
 		        compile(&sym, "PSH eax\n");
 				} else {
-						fprintf(stderr, "Error : uninitialized symbol '%s'\n",$1);
+						fprintf(stderr, "Error : uninitialized symbol '%s'\n", $1);
 				}
 		} else {
 		    fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $1);
@@ -344,7 +344,7 @@ f_prototype	: tINT tWORD tPARO param_proto tPARC {
 			sym_push(&sym);
 			compile(&sym, "PSH ebp\n");
       compile(&sym, "COP ebp esp\n");
-			printf("Push lors de '%s' prototype.\n",$2);
+			printf("Push lors de '%s' prototype.\n", $2);
 			// On doit redémarrer les adresses locales à 1
 			sym.local_address = 1;
 	
@@ -399,7 +399,7 @@ f_prototype	: tINT tWORD tPARO param_proto tPARC {
 			
 			sym_push(&sym);
 			compile(&sym, "PSH ebp\n");
-      compile(&sym, "COP ebp esp\n");
+                        compile(&sym, "COP ebp esp\n");
 			printf("Push lors de '%s' prototype.\n",$2);
 			sym.local_address = 1;
 			
@@ -408,7 +408,7 @@ f_prototype	: tINT tWORD tPARO param_proto tPARC {
 		;
 		
 f_definition	: f_prototype {
-		  	struct element * element = find_sym(&sym, $1);
+		  	struct element *element = find_sym(&sym, $1);
 		  	if (element == NULL) {
 				fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
 			}
@@ -447,7 +447,7 @@ f_call	: tWORD tPARO param_call tPARC {
 				int adr = get_address(&sym, $1);
 				// On teste si la fonction est bien initialisée
 				if (adr == -1) {
-				   	fprintf(stderr, "Error : uninitialized function '%s'\n",$1);
+				   	fprintf(stderr, "Error : uninitialized function '%s'\n", $1);
 				} else {
 					// Appel de la fonction (i.e jump à adr)
 				     	compile(&sym, "CAL %d\n", adr);
@@ -462,7 +462,7 @@ f_call	: tWORD tPARO param_call tPARC {
 		if (element != NULL) {
 			// Verification de l'initialisation de la fonction
 			if (element->initialized == 0) {
-				fprintf(stderr, "Error : uninitialized function '%s'\n",$1);
+				fprintf(stderr, "Error : uninitialized function '%s'\n", $1);
 			}
 			// Verification du nombre d'argument
 			if (element->nb_parameters > 0) {
@@ -473,7 +473,7 @@ f_call	: tWORD tPARO param_call tPARC {
 				int adr = get_address(&sym, $1);
 				// On teste si la fonction est bien initialisée
 				if (adr == -1) {
-				   	fprintf(stderr, "Error : uninitialized function '%s'\n",$1);
+				   	fprintf(stderr, "Error : uninitialized function '%s'\n", $1);
 				} else {
 					// Appel de la fonction (i.e jump à adr)
 				     	compile(&sym, "CAL %d\n", adr);
