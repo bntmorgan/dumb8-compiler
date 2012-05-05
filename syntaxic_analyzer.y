@@ -4,6 +4,7 @@
 #include <string.h>
 #include "options.h"
 #include "sym.h"
+#define NB_MAX_PARAM 20
 
 extern int line;
   
@@ -11,10 +12,16 @@ void yyerror(char *s);
 
 // Table des symboles
 struct t_sym sym;
+/* Liste des arguments d'une fonction et son index
+ * Les variables étant toutes des int, la liste ne contient que des noms de variables
+*/
+char * param_list[NB_MAX_PARAM];
+int param_index = 0;
 
 %}
 
 %error-verbose
+
 // Declaration des types utilisés
 %union {
   int entier;
@@ -27,8 +34,8 @@ struct t_sym sym;
 
 %token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEQEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
-%type <entier> expr parameters_decl parameters_call terme
-%type <chaine> f_declaration
+%type <entier> expr param_proto param_call terme
+%type <chaine> f_declaration f_prototype
 
 // Définition des associativités par ordre croissant de priorité
 %right tEQ
@@ -67,13 +74,16 @@ bloc_instructions	: tACCO {sym_push(&sym);} instructions tACCC {sym_pop(&sym);}
 			| tACCO tACCC
                         ;
 
-instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n");}
+instruction	: tINT declarations tSEMICOLON {
+	    		printf ("declaration de variable\n");
+		}
 		| tWORD affectations tSEMICOLON {
 			printf ("affectation de variable\n");
+			
 			// Recherche du symbole associe au nom de variable dans la table des symboles
 			struct element *elmt = find_sym(&sym, $1);
 			if (elmt == NULL) {
-				fprintf(stderr, "Error : uninitialized symbol : %s.\n", $1);			     
+				fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $1);
 			}
 			else {
 				compile(&sym, "POP eax\n");
@@ -82,23 +92,36 @@ instruction	: tINT declarations tSEMICOLON {printf ("declaration de variable\n")
 				elmt->initialized = 1;
 			}
 		}
-		| f_call tSEMICOLON {printf("appel de fonction\n");}
-		| printf tSEMICOLON {printf("affichage d'une variable\n");}
-                | if {printf("if\n");} 
-		| while {printf("while\n");}
+		| f_call tSEMICOLON {
+			printf("appel de fonction\n");
+		}
+		| printf tSEMICOLON {
+			printf("affichage d'une variable\n");
+		}
+                | if {
+			printf("if\n");
+		} 
+		| while {
+			printf("while\n");
+		}
                 | tSEMICOLON
 		;
 
 affectations	: tEQ tWORD affectations {
 			struct element *elmt = find_sym(&sym, $2);
-			// Dans tous les cas, la derniere valeur de eax est la valeur d'affectation de la variable
-			// Evite un pop de la valeur et un push de cette meme valeur
-			compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
-			// Le symbole est desormais initialise
-			elmt->initialized = 1;
+			if (elmt == NULL) {
+				fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $2);
+			}
+			else {
+				// Dans tous les cas, la derniere valeur de eax est la valeur d'affectation de la variable
+				// Evite un pop de la valeur et un push de cette meme valeur
+				compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
+				// Le symbole est desormais initialise
+				elmt->initialized = 1;
+			}
 		}
 		| tEQ expr {
-			// La valeur de l'expression a ete pushee lors de l'evaluation de expr
+			// La valeur de l'expression a ete pushee dans eax lors de l'evaluation de expr
 		}
 		;
 
@@ -107,28 +130,49 @@ declarations : declaration tCOMMA declarations {}
 	     ; 
 
 declaration : tWORD affectations {
-                    // Ajout du symbole dans la table des symboles
-                    struct element *elmt = add_sym(&sym, $1);
+		struct element *elmt = find_sym(&sym, $1);
+		// Si l'élément n'est pas déjà dans la table des symboles
+		if (elmt == NULL) { 
+	    	    // Ajout du symbole dans la table des symboles
+                    elmt = add_sym(&sym, $1);
 		    // On donne l'adresse à la variable locale
 		    elmt->address = sym.local_address;
+		    elmt->initialized = 1;
 		    // Incrementation des adresses locales
 		    sym.local_address++;
-		    // On décale esp de 4 octets allocation de la variable
-		    compile(&sym, "AFC eax #1\n");
-		    compile(&sym, "SOU esp esp eax\n");
-		    // Initialication de la variable
+		    // On récupère la valeur de la variable déclarée
 		    compile(&sym, "POP eax\n");
+		    // On décale esp de 4 octets allocation de la variable
+		    compile(&sym, "AFC ebx #1\n");
+		    compile(&sym, "SOU esp esp ebx\n");
+		    // Initialication de la variable
 		    compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
+		}
+		else {
+		    //TODO note: previous definition of ‘%s’ was here
+		    fprintf(stderr, "Error : redefinition of '%s'\n", $1);
+		}
             } 
 	    | tWORD {
+		// Si l'élément n'est pas déjà dans la table des symboles
+                struct element *elmt = find_sym(&sym, $1);
+		if (elmt == NULL) { 
    	            // Ajout du symbole dans la table des symboles
-                    struct element *elt = add_sym(&sym, $1);
+                    elmt = add_sym(&sym, $1);
 		    // On donne l'adresse à la variable locale
-		    elt->address = sym.local_address;
+		    elmt->address = sym.local_address;
     		    // Incrementation des adresses locales
 		    sym.local_address++;
-	  }
-	  ;
+		    // On décale esp de 4 octets allocation de la variable
+		    compile(&sym, "AFC ebx #1\n");
+		    compile(&sym, "SOU esp esp ebx\n");
+		}
+		else {
+		    //TODO note: previous definition of ‘%s’ was here
+		    fprintf(stderr, "Error : redefinition of '%s'\n", $1);
+	  	}
+	    }
+	    ;
 
 expr	: terme {}
 	| expr tADD expr {
@@ -170,7 +214,7 @@ expr	: terme {}
 		compile(&sym, "SUP eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
 	}
-  | expr tINF expr {
+  	| expr tINF expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "INF eax eax ebx\n");
@@ -184,67 +228,219 @@ terme : tPARO expr tPARC {}
 		compile(&sym, "PSH eax\n");
 	}
 	| tWORD {
-		int adr = get_address(&sym, $1); 
-		compile(&sym, "COP eax [ebp]-%d\n", adr);
-		compile(&sym, "PSH eax\n");
+		struct element *elmt = find_sym(&sym, $1);
+		if (elmt != NULL) { 
+		    if (elmt->initialized != 0) {
+		        int adr = get_address(&sym, $1); 
+		        compile(&sym, "COP eax [ebp]-%d\n", adr);
+		        compile(&sym, "PSH eax\n");
+				} else {
+						fprintf(stderr, "Error : uninitialized symbol '%s'\n",$1);
+				}
+		} else {
+		    fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $1);
+		}
 	}
 	;
 
-f_declaration	: tINT tWORD tPARO parameters_decl tPARC {
+param_proto	: tINT tWORD tCOMMA param_proto {
+			// Incrementation du compteur du nombre de parametres
+			$$ = $4 + 1;
+			// Ajout du paramètre dans la liste stockant temporairement les paramètres
+			param_list[param_index] = $2;
+			param_index++;
+		}
+		| tINT tWORD {
+			$$ = 1;
+			param_list[param_index] = $2;
+			param_index++;
+		}
+		;
+
+param_call	: terme tCOMMA param_call {
+			// Incrementation du compteur du nombre de parametres
+			$$ = $3 + 1;
+		}
+		| terme {$$ = 1;}
+		;
+
+f_declaration	: tINT tWORD tPARO param_proto tPARC {
+			// Remise à zero de la liste de paramètres créés
+			param_index = 0;
+			
 			// Le type courant est T_INT par defaut
 			// Changement du type courant de l'element a ajouter a la table
 			change_current_type(&sym, T_FUN);
-			struct element *element = add_sym(&sym, $2);
-			element->nb_parameters = $4;
-			// La fonction n'est ici pas encore initialisee
-			element->initialized = 0;
+			struct element *element = find_sym(&sym, $2);
+			// Si l'élément n'est pas déjà dans la table des symboles
+			if (element == NULL) {
+				element = add_sym(&sym, $2);
+				element->nb_parameters = $4;
+				// La fonction n'est ici pas encore initialisee
+				element->initialized = 0;
+				// Remise à T_INT du type courant
+				change_current_type(&sym, T_INT);
+				// La valeur retour est le nom de la fonction
+				$$ = $2;
+			} else if (element->nb_parameters != $4) {
+				//TODO error: previous declaration of ‘f’ was here 
+				fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
+			}
 			// Remise à T_INT du type courant
 			change_current_type(&sym, T_INT);
-			// La valeur retour est le nom de la fonction
+		}
+		| tINT tWORD tPARO tPARC {
+			// Changement du type courant de l'element a ajouter a la table
+			change_current_type(&sym, T_FUN);
+			struct element *element = find_sym(&sym, $2);
+			// Si l'élément n'est pas déjà dans la table des symboles
+			if (element == NULL) {
+				struct element *element = add_sym(&sym, $2);
+				element->nb_parameters = 0;
+				// La fonction n'est ici pas encore initialisee
+				element->initialized = 0;
+				// Remise à T_INT du type courant
+				change_current_type(&sym, T_INT);
+				// La valeur retour est le nom de la fonction
+				$$ = $2;
+			} else if (element->nb_parameters != 0) {
+					//TODO error: previous declaration of ‘f’ was here 
+					fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
+			}
+			// Remise à T_INT du type courant
+			change_current_type(&sym, T_INT);
+		}
+		;
+
+f_prototype	: tINT tWORD tPARO param_proto tPARC {
+			// 1ere étape : Ajout de la fonction à la table des symboles
+			// Le type courant est T_INT par defaut
+			// Changement du type courant de l'element a ajouter a la table
+			change_current_type(&sym, T_FUN);
+			struct element *element = find_sym(&sym, $2);
+			// Si l'élément n'est pas déjà dans la table des symboles
+			if (element == NULL) {
+				element = add_sym(&sym, $2);
+				element->nb_parameters = $4;
+				// La fonction n'est ici pas encore initialisee
+				element->initialized = 0;
+				// On donne l'addresse de la fonction
+				element->address = sym.program_counter + 1;
+				// Remise à T_INT du type courant
+				change_current_type(&sym, T_INT);
+
+			// Dans le cas d'une redefinition il suffit seulement de vérifier
+			// le nb d'argument (car un seul type int et le nom n'importe pas)
+			} else if (element->nb_parameters != $4) {
+				//TODO error: previous declaration of ‘f’ was here 
+				fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
+			}
+			// Remise à T_INT du type courant
+			change_current_type(&sym, T_INT);
+		
+			// On stocke le contexte de symbole courant
+			// Celui-ci sera dépilé si ce prototype
+			// ne sert pas à l'initialisation de la fonction
+			sym_push(&sym);
+			compile(&sym, "PSH ebp\n");
+      compile(&sym, "COP ebp esp\n");
+			printf("Push lors de '%s' prototype.\n",$2);
+			// On doit redémarrer les adresses locales à 1
+			sym.local_address = 1;
+	
+			// 2eme étape : push de tous les paramètres
+			struct element *elmt;
+			int i;
+			for (i=0 ; i < param_index; i++) {
+			    // Création de l'élément associé au paramètre i
+			    elmt = find_sym(&sym, param_list[i]);
+			    // Si l'élément n'est pas déjà dans la table des symboles
+			    // Cas d'un prototype de fonction avec 2 paramètres de même nom
+			    if (elmt == NULL) { 
+			        // Ajout du symbole dans la table des symboles
+			        elmt = add_sym(&sym, param_list[i]);
+		    	        // On donne l'adresse à la variable locale
+		    	        elmt->address = sym.local_address;
+		    	        // Incrementation des adresses locales
+		    	        sym.local_address++;
+		    	        // On décale esp de 4 octets allocation de la variable
+		    	        compile(&sym, "AFC eax #1\n");
+		    	        compile(&sym, "SOU esp esp eax\n");
+			    } else if (elmt->nb_parameters != $4) {
+			        fprintf(stderr, "Error : redefinition of '%s'\n", param_list[i]);
+			        break;
+			    }
+			}
+	      		// Remise à zero de la liste de paramètres créés
+			param_index = 0;
 			$$ = $2;
 		}
 		| tINT tWORD tPARO tPARC {
 			// Changement du type courant de l'element a ajouter a la table
 			change_current_type(&sym, T_FUN);
-			struct element *element = add_sym(&sym, $2);
-			element->nb_parameters = 0;
-			// La fonction n'est ici pas encore initialisee
-			element->initialized = 0;
+			struct element *element = find_sym(&sym, $2);
+			// Si l'élément n'est pas déjà dans la table des symboles
+			if (element == NULL) {
+				element = add_sym(&sym, $2);
+				element->nb_parameters = 0;
+				// La fonction n'est ici pas encore initialisee
+				element->initialized = 0;
+				// On donne l'addresse de la fonction
+				element->address = sym.program_counter + 1;
+				// Remise à T_INT du type courant
+				change_current_type(&sym, T_INT);
+				
+			} else if (element->nb_parameters != 0) {
+				//TODO error: previous declaration of ‘f’ was here 
+				fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
+			}
 			// Remise à T_INT du type courant
 			change_current_type(&sym, T_INT);
-			// La valeur retour est le nom de la fonction
+			
+			sym_push(&sym);
+			compile(&sym, "PSH ebp\n");
+      compile(&sym, "COP ebp esp\n");
+			printf("Push lors de '%s' prototype.\n",$2);
+			sym.local_address = 1;
+			
 			$$ = $2;
 		}
 		;
-
-parameters_decl	: tINT tWORD tCOMMA parameters_decl {
-			// Incrementation du compteur du nombre de parametres
-			$$ = $4 +1;
+		
+f_definition	: f_prototype {
+		  	struct element * element = find_sym(&sym, $1);
+		  	if (element == NULL) {
+				fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
+			}
+			else {
+				// La fonction est desormais initialisee
+		 		element->initialized = 1;
+				
+                	}
 		}
-		| tINT tWORD {
-			$$ = 1;
+		f_body {
+			// On sort de la fonction donc on pop de la table des symboles
+			sym_pop(&sym);
+			printf("Pop apres body.\n");
 		}
 		;
-
-parameters_call	: terme tCOMMA parameters_call {
-			// Incrementation du compteur du nombre de parametres
-			$$ = $3 +1;
-		}
-		| terme {$$ = 1;}
-		;
-
-f_call	: tWORD tPARO parameters_call tPARC {
+		
+f_body	: tACCO instructions tACCC {
+		compile(&sym, "RET\n");
+	}
+	;
+	
+f_call	: tWORD tPARO param_call tPARC {
 		struct element * element = find_sym(&sym, $1);
 		if (element != NULL) {
-		        printf("Function %s -> %d\n", $1, element->nb_parameters);
 			// Verification de l'initialisation de la fonction
 			if (element->initialized == 0) {
 			   	fprintf(stderr, "Error : function `%s` is not initialized.\n", $1);			     
 			// Verification du nombre d'argument
 			} else if ((element->nb_parameters) > $3) {
-				fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
-			} else if ((element->nb_parameters) < $3) {
 				fprintf(stderr, "Error : too few arguments to function '%s'\n", $1);
+			} else if ((element->nb_parameters) < $3) {
+				fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
 			} else {
 				printf("Function call ok -> %s has %d parameters\n", $1, element->nb_parameters);
 				// Appel de la fonction
@@ -253,12 +449,11 @@ f_call	: tWORD tPARO parameters_call tPARC {
 				if (adr == -1) {
 				   	fprintf(stderr, "Error : uninitialized function '%s'\n",$1);
 				} else {
-					//Appel de la fonction (i.e jump à adr)
+					// Appel de la fonction (i.e jump à adr)
 				     	compile(&sym, "CAL %d\n", adr);
 				}
 			}
-		}
-		else {
+		} else {
 			fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
 		}
 	}
@@ -266,14 +461,24 @@ f_call	: tWORD tPARO parameters_call tPARC {
 		struct element *element = find_sym(&sym, $1);
 		if (element != NULL) {
 			// Verification de l'initialisation de la fonction
-			if (element->initialized == 0)
+			if (element->initialized == 0) {
 				fprintf(stderr, "Error : uninitialized function '%s'\n",$1);
-
+			}
 			// Verification du nombre d'argument
-			if (element->nb_parameters > 0)
+			if (element->nb_parameters > 0) {
 				fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
-			else 
+			} else { 
 				printf("Function call ok -> %s has %d parameters\n", $1, 0);
+				// Appel de la fonction
+				int adr = get_address(&sym, $1);
+				// On teste si la fonction est bien initialisée
+				if (adr == -1) {
+				   	fprintf(stderr, "Error : uninitialized function '%s'\n",$1);
+				} else {
+					// Appel de la fonction (i.e jump à adr)
+				     	compile(&sym, "CAL %d\n", adr);
+				}
+			}
 		}
 		else {
 			fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
@@ -281,45 +486,11 @@ f_call	: tWORD tPARO parameters_call tPARC {
 	}	
 	;
 
-f_definition	: f_declaration {
-			// On stocke le contexte de symbole courant
-		  	sym_push(&sym);
-		  	// On doit redémarrer les adresses locales a 1
-		  	sym.local_address = 1;
-		  	struct element * element = find_sym(&sym, $1);
-		  	if (element == NULL) {
-				fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
-			}
-			else {
-				// La fonction est desormais initialisee
-		 		element->initialized = 1;
-				// On donne l'addresse de la fonction
-				element->address = sym.program_counter + 1;
-                	}
-		}
-		f_body {
-		        sym_pop(&sym);
-		}
-		;
-		
-f_body	: tACCO {
-		compile(&sym, "PSH ebp\n");
-		compile(&sym, "COP ebp esp\n");
-	} 
-	instructions tACCC {
-		compile(&sym, "RET\n");
-	}
-	;
 
-	/*return	: tRETURN expr {$$ = $2;}
-	;*/
-
-if	: tIF tPARO expr {
-                compile(&sym, "POP eax\n");
-	} tPARC bloc_instructions {} %prec LOWER_THAN_ELSE 
-        | tIF tPARO expr {} tPARC instruction {/* Il faut au moins une instruction apres un if */} %prec LOWER_THAN_ELSE 
-	| tIF tPARO expr {} tPARC bloc_instructions else {}
-	| tIF tPARO expr {} tPARC instruction else {/* Il faut au moins une instruction apres un if */}
+if	: tIF tPARO expr tPARC bloc_instructions %prec LOWER_THAN_ELSE 
+        | tIF tPARO expr tPARC instruction {/* Il faut au moins une instruction apres un if */} %prec LOWER_THAN_ELSE 
+	| tIF tPARO expr tPARC bloc_instructions else {}
+	| tIF tPARO expr tPARC instruction else {/* Il faut au moins une instruction apres un if */}
 	;
 
 else	: tELSE bloc_instructions {}
@@ -333,7 +504,12 @@ while	: tWHILE tPARO expr tPARC bloc_instructions {}
 	;
 		
 printf	: tPRINTF tPARO tWORD tPARC {
-		compile(&sym, "PRI [ebp]-%d\n", get_address(&sym, $3));
+		int adr = get_address(&sym, $3); 
+		if (adr == -1 ){
+		  fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $3);
+		} else {
+		  compile(&sym, "PRI [ebp]-%d\n", adr);
+		}
 	}
 	;
 %%
