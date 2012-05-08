@@ -4,7 +4,7 @@ int g() {
   printf(b);
 }
 
-int f() {
+int f(int i, int j) {
   int a;
   a = 3 * 4 + 5;
   printf(a);
@@ -12,5 +12,5 @@ int f() {
 }
 
 int main() {
-  f();
+  f(4,5);
 }

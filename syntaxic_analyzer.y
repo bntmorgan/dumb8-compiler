@@ -419,15 +419,20 @@ f_definition	: f_prototype {
                 	}
 		}
 		f_body {
+		  struct element *elmt = find_sym(&sym, $1);
+			if (elmt == NULL) {
+				fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
+		  } else {
+		    compile(&sym, "RET %d\n",elmt->nb_parameters);
+		  }
+			
 			// On sort de la fonction donc on pop de la table des symboles
 			sym_pop(&sym);
 			printf("Pop apres body.\n");
 		}
 		;
 		
-f_body	: tACCO instructions tACCC {
-		compile(&sym, "RET\n");
-	}
+f_body	: tACCO instructions tACCC {}
 	;
 	
 f_call	: tWORD tPARO param_call tPARC {
