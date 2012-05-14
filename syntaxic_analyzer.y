@@ -491,16 +491,46 @@ f_call	: tWORD tPARO param_call tPARC {
 	}	
 	;
 
+jmpif   : {
+                // On récupère l'évalutaion de l'expression qui est en tête de pile
+                compile(&sym, "POP eax\n");
+                // On jumpe a l'adresse du else qu'on ne connais pas encore, pour l'instant -1
+                compile(&sym, "JMF temp_addr\n");
+                // On empile une addresse temporaire
+                taddress_push(&sym);
+        }
+        ;
 
-if	: tIF tPARO expr tPARC bloc_instructions %prec LOWER_THAN_ELSE 
-        | tIF tPARO expr tPARC instruction {/* Il faut au moins une instruction apres un if */} %prec LOWER_THAN_ELSE 
-	| tIF tPARO expr tPARC bloc_instructions else {}
-	| tIF tPARO expr tPARC instruction else {/* Il faut au moins une instruction apres un if */}
+jmpelse : {
+                // On connait l'addresse JMF du if de même niveau
+                taddress_pop(&sym); 
+                // On saute à l'adresse de la fin du else, après avoir réalisé le if
+                compile(&sym, "JMP temp_addr\n");
+                // On empile une addresse temporaire
+                taddress_push(&sym);
+        }
+
+if	: tIF tPARO expr tPARC jmpif bloc_instructions %prec LOWER_THAN_ELSE {
+                // On connait l'addresse JMF du if de même niveau
+                taddress_pop(&sym); 
+        } 
+        | tIF tPARO expr tPARC jmpif instruction {
+                // Il faut au moins une instruction apres un if
+                // On connait l'addresse JMF du if de même niveau
+                taddress_pop(&sym); 
+        } %prec LOWER_THAN_ELSE 
+	| tIF tPARO expr tPARC jmpif bloc_instructions else {}
+        | tIF tPARO expr tPARC jmpif instruction else {/* Il faut au moins une instruction apres un if */}
 	;
 
-else	: tELSE bloc_instructions {}
-	| tELSE instruction {
-		/* Il faut au moins une instruction apres un else */
+else	: tELSE jmpelse bloc_instructions {
+                // On connait l'addresse JMF du if de même niveau
+                taddress_pop(&sym); 
+        }
+	| tELSE jmpelse instruction {
+		// Il faut au moins une instruction apres un else
+                // On connait l'addresse JMF du if de même niveau
+                taddress_pop(&sym); 
 	}
 	;
 

@@ -24,7 +24,7 @@ int inc_sym(struct t_sym *sym);
  */
 int inc_context_stack_sym(struct t_sym *sym);
 
-int create_sym(struct t_sym *sym) {
+void create_sym(struct t_sym *sym) {
   memset(sym, 0, sizeof(struct t_sym));
   sym->size = SIZE_STEP;
   sym->current_type = T_INT;
@@ -32,14 +32,19 @@ int create_sym(struct t_sym *sym) {
   sym->t = malloc(SIZE_STEP * sizeof(struct t_sym));
   if(sym->t == NULL) {
     perror("Error while initializing symbol table");
-    return -1;
+    exit(EXIT_FAILURE);
   } 
   // Allocation / initialisation de la pile de contexte
   sym->context_stack = malloc(SIZE_STEP * sizeof(struct context));
   if (sym->context_stack == NULL) {
     perror("Error while initializing context stack");
-    free(sym->t);
-    return -1;
+    exit(EXIT_FAILURE);
+  }
+  // Allocation / initialisation de la pile d'adresses temporaires
+  sym->ta = malloc(SIZE_STEP * sizeof(struct taddress));
+  if (sym->ta == NULL) {
+    perror("Error while initializing temp address stack");
+    exit(EXIT_FAILURE);
   }
   sym->context_stack_size = SIZE_STEP;
   // Le premier index est a -1 : la pile est vide
@@ -48,7 +53,12 @@ int create_sym(struct t_sym *sym) {
   sym->program_counter = -1;
   // Première addresse d'une variable locale
   sym->local_address = 1;
-  return 0;
+  // Taille de la pile d'adresses temporaires
+  sym->taddress_stack_size = SIZE_STEP;
+  // Tête de la pile d'adresses temporaires
+  sym->taddress_stack_head = -1;
+  // Vrai tête de pile, premier élément qui est à -1 en partant de la tête
+  sym->taddress_stack_real_head = -1;
 }
 
 void free_sym(struct t_sym *sym){
@@ -71,6 +81,16 @@ int inc_context_stack_sym(struct t_sym *sym) {
   // Augmente la taille de la pile des contextes de deux fois la taille courante
   sym->context_stack = realloc(sym->context_stack, sym->context_stack_size * sizeof(struct context));
   if (sym->context_stack == NULL) {
+    return -1;
+  }
+  return 0;
+}
+
+int inc_taddress_stack(struct t_sym *sym) {
+  sym->taddress_stack_size *= 2;
+  // Augmente la taille de la pile des contextes de deux fois la taille courante
+  sym->ta = realloc(sym->ta, sym->taddress_stack_size * sizeof(struct taddress));
+  if (sym->ta == NULL) {
     return -1;
   }
   return 0;
@@ -112,6 +132,12 @@ void print_sym(struct t_sym *sym) {
     if (sym->t[i].type == T_FUN) {
       printf("| Nom : %9s | nb arg : %d | type : %d | init : %d | adr : %3d |\n", sym->t[i].name, sym->t[i].nb_parameters, sym->t[i].type, sym->t[i].initialized, sym->t[i].address);
     }  
+  }
+  printf("+----------------------------------------------------------------+\n");
+  printf("| Adresses temporaires :                                         |\n");
+  printf("+----------------------------------------------------------------+\n");
+  for (i = sym->taddress_stack_head; i >= 0; i--) {
+    printf("| Ligne : %4d | Addresse : %4d                                 |\n", sym->ta[i].line, sym->ta[i].address);
   }
   printf("+----------------------------------------------------------------+\n");
 }
@@ -171,6 +197,36 @@ int sym_pop(struct t_sym *sym) {
   sym->idx = sym->context_stack[sym->context_stack_head].idx;
   sym->local_address = sym->context_stack[sym->context_stack_head].local_address;
   sym->context_stack_head--;
+  return 0;
+}
+
+int taddress_push(struct t_sym *sym) {
+  if (sym->taddress_stack_head + 1 >= sym->taddress_stack_size) {
+    inc_taddress_stack(sym);
+  }
+  sym->taddress_stack_head++;
+  sym->taddress_stack_real_head = sym->taddress_stack_head;
+
+  sym->ta[sym->taddress_stack_head].address = -1;
+  sym->ta[sym->taddress_stack_head].line = sym->program_counter;
+  return 0;
+}
+
+int taddress_pop(struct t_sym *sym) {
+  if (sym->taddress_stack_real_head < 0) {
+    return -1;
+  }
+  sym->ta[sym->taddress_stack_real_head].address = sym->program_counter;
+  // Recherche du prochain head a -1
+  int i = sym->taddress_stack_real_head - 1;
+  while (i > -1) {
+    if (sym->ta[i].address == -1){
+      sym->taddress_stack_real_head = i;
+      break;
+    }
+    i--;
+  }
+  printf("lol %d\n", sym->taddress_stack_real_head);
   return 0;
 }
 

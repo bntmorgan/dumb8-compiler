@@ -23,6 +23,15 @@ struct context {
 };
 
 /**
+ * Element de la pile des adresses temporaires des if
+ * Adresse temporaire = -1 si elle n'a pas été trouvée
+ */
+struct taddress {
+  int address;
+  int line;
+};
+
+/**
  * Element de la table des symboles
  */
 struct element {
@@ -48,16 +57,20 @@ struct t_sym {
   // Adresse courante du programme
   int program_counter;
   // Adresse courante des variables locales
-  int local_address; 
+  int local_address;
+  // Pile des adresses temporaires des if
+  struct taddress *ta;
+  int taddress_stack_size;
+  int taddress_stack_head; // Tête de pile 
+  int taddress_stack_real_head; // Premier élémént qui est a -1 en partant de la tête
 };
 
 /**
  * Cree la table des symboles
  *
  * @param sym la table des symboles à initialiser
- * @return 0 si tout se passe bien -1 si erreur d'allocation
  */
-int create_sym(struct t_sym *sym);
+void create_sym(struct t_sym *sym);
 
 /**
  * Detruis la table des symboles
@@ -137,6 +150,20 @@ int get_address(struct t_sym *sym, char *name);
  * @return 0 si le changement s'est bien deroule
  */
 int change_current_type(struct t_sym *sym, enum types t);
+
+/**
+ * Ajoute une addresse temporaire dans la pile d'adresses temporaires
+ * @param sym la table des symboles
+ * @return 0 si tout se passe bien -1 si erreur d'allocation
+ */
+int taddress_push(struct t_sym *sym);
+
+/**
+ * Sette avc l'adresse la première addresse temporaire a -1 en tête de pile 
+ * @param sym la table des symboles
+ * @return 0 si tout se passe bien -1 si erreur
+ */
+int taddress_pop(struct t_sym *sym);
 
 /**
  * Compile a line
