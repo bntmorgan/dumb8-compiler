@@ -136,7 +136,7 @@ void print_sym(struct t_sym *sym) {
   printf("+----------------------------------------------------------------+\n");
   printf("| Adresses temporaires :                                         |\n");
   printf("+----------------------------------------------------------------+\n");
-  for (i = sym->taddress_stack_head; i >= 0; i--) {
+  for (i = 0; i <= sym->taddress_stack_head; i++) {
     printf("| Ligne : %4d | Addresse : %4d                                 |\n", sym->ta[i].line, sym->ta[i].address);
   }
   printf("+----------------------------------------------------------------+\n");
