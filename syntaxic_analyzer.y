@@ -35,7 +35,7 @@ int param_index = 0;
 %token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEQEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
 %type <entier> expr param_proto param_call terme
-%type <chaine> f_declaration f_prototype
+%type <chaine> f_declaration f_prototype declaration declarations
 
 // Définition des associativités par ordre croissant de priorité
 %right tEQ
@@ -48,9 +48,6 @@ int param_index = 0;
 
 // Axiome
 %start instructions_top
-
-// Declaration du type des non terminaux qui ne sont pas des entiers
-// %type <nom_de_type> non_terminal
 
 %%
 
@@ -77,14 +74,30 @@ bloc_instructions	: tACCO {sym_push(&sym);} instructions tACCC {sym_pop(&sym);}
 instruction	: tINT declarations tSEMICOLON {
 	    		printf ("declaration de variable\n");
 		}
+                | tCONST tINT declarations tSEMICOLON {
+	    		printf ("declaration d'une constante\n");
+			// Le nom de la variable déclarée est renvoyée par le non-terminal 'declarations'
+                        struct element *elmt = find_sym(&sym, $3);
+                        if (elmt == NULL) {
+				//Cas impossible mais on ne sait jamais...
+				fprintf(stderr, "Error : variable undeclared.\n");
+                        } else {
+                                elmt->constant = 1;
+                        }       
+		}
 		| tWORD affectations tSEMICOLON {
 			printf ("affectation de variable\n");
-			
 			// Recherche du symbole associe au nom de variable dans la table des symboles
 			struct element *elmt = find_sym(&sym, $1);
 			if (elmt == NULL) {
 				fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $1);
-			}
+			} else if (elmt->constant == 1) {
+				// Affectée ou pas, une constante ne peut être modifiée
+                                fprintf(stderr, "Error : assignment of read-only variable ‘%s'.\n", $1);
+				// Si la variable est une constante on ne l'affecte pas avec la valeur de eax
+				// TODO : choix -> break ou pas ?
+				compile(&sym, "POP eax\n");
+                        }
 			else {
 				compile(&sym, "POP eax\n");
 				compile(&sym, "COP [ebp]-%d eax\n", elmt->address);
@@ -152,6 +165,8 @@ declaration : tWORD affectations {
 		    //TODO note: previous definition of ‘%s’ was here
 		    fprintf(stderr, "Error : redefinition of '%s'\n", $1);
 		}
+		//Une déclaration renvoie le nom de la variable déclarée
+		$$ = $1;
             } 
 	    | tWORD {
 		// Si l'élément n'est pas déjà dans la table des symboles
@@ -171,6 +186,7 @@ declaration : tWORD affectations {
 		    //TODO note: previous definition of ‘%s’ was here
 		    fprintf(stderr, "Error : redefinition of '%s'\n", $1);
 	  	}
+		$$ = $1;
 	    }
 	    ;
 

@@ -4,6 +4,10 @@ test_grammar : compiler test_grammar.c
 	./compiler -o test_grammar.s test_grammar.c
 	cp test_grammar.s ../asm_interpreter
 
+test_const : compiler test_const.c
+	./compiler -o test_const.s test_const.c
+	cp test_const.s ../asm_interpreter
+
 test_expr : compiler test_grammar.c
 	./compiler -o test_expr.s test_expr.c
 	cp test_expr.s ../asm_interpreter
