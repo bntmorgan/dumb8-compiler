@@ -50,7 +50,6 @@ struct t_sym {
   struct element *t;
   int idx;
   int size;
-  int current_type;
   // Pile des index de contexte
   struct context *context_stack;
   int context_stack_head;
@@ -85,9 +84,10 @@ void free_sym(struct t_sym *sym);
  *
  * @param sym la table des symboles
  * @param name Nom de variable dans la table des symboles
+ * @param type Type du symbole
  * @return l'addresse de l'élément si tout se passe bien NULL si erreur d'allocation
  */
-struct element* add_sym(struct t_sym *sym, char *name);
+struct element* add_sym(struct t_sym *sym, char *name, int type);
 
 /**
  * Affiche la table des symboles
@@ -143,14 +143,6 @@ int get_sym_idx(struct t_sym *sym);
  * n'est pas dans la table
  */
 int get_address(struct t_sym *sym, char *name);
-
-/**
- * Change le type de symbole courant pour le symbole t.
- *
- * @param t Nouveau type courant : T_INT ou T_FUN
- * @return 0 si le changement s'est bien deroule
- */
-int change_current_type(struct t_sym *sym, enum types t);
 
 /**
  * Ajoute une addresse temporaire dans la pile d'adresses temporaires

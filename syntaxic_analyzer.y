@@ -147,7 +147,7 @@ declaration : tWORD affectations {
 		// Si l'élément n'est pas déjà dans la table des symboles
 		if (elmt == NULL) { 
 	    	    // Ajout du symbole dans la table des symboles
-                    elmt = add_sym(&sym, $1);
+                    elmt = add_sym(&sym, $1, T_INT);
 		    // On donne l'adresse à la variable locale
 		    elmt->address = sym.local_address;
 		    elmt->initialized = 1;
@@ -173,7 +173,7 @@ declaration : tWORD affectations {
                 struct element *elmt = find_sym(&sym, $1);
 		if (elmt == NULL) { 
    	            // Ajout du symbole dans la table des symboles
-                    elmt = add_sym(&sym, $1);
+                    elmt = add_sym(&sym, $1, T_INT);
 		    // On donne l'adresse à la variable locale
 		    elmt->address = sym.local_address;
     		    // Incrementation des adresses locales
@@ -284,66 +284,49 @@ f_declaration	: tINT tWORD tPARO param_proto tPARC {
 			// Remise à zero de la liste de paramètres créés
 			param_index = 0;
 			
-			// Le type courant est T_INT par defaut
-			// Changement du type courant de l'element a ajouter a la table
-			change_current_type(&sym, T_FUN);
 			struct element *element = find_sym(&sym, $2);
 			// Si l'élément n'est pas déjà dans la table des symboles
 			if (element == NULL) {
-				element = add_sym(&sym, $2);
+				element = add_sym(&sym, $2, T_FUN);
 				element->nb_parameters = $4;
 				// La fonction n'est ici pas encore initialisee
 				element->initialized = 0;
-				// Remise à T_INT du type courant
-				change_current_type(&sym, T_INT);
 				// La valeur retour est le nom de la fonction
 				$$ = $2;
 			} else if (element->nb_parameters != $4) {
 				//TODO error: previous declaration of ‘f’ was here 
 				fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
 			}
-			// Remise à T_INT du type courant
-			change_current_type(&sym, T_INT);
 		}
 		| tINT tWORD tPARO tPARC {
-			// Changement du type courant de l'element a ajouter a la table
-			change_current_type(&sym, T_FUN);
 			struct element *element = find_sym(&sym, $2);
 			// Si l'élément n'est pas déjà dans la table des symboles
 			if (element == NULL) {
-				struct element *element = add_sym(&sym, $2);
+				struct element *element = add_sym(&sym, $2, T_FUN);
 				element->nb_parameters = 0;
 				// La fonction n'est ici pas encore initialisee
 				element->initialized = 0;
-				// Remise à T_INT du type courant
-				change_current_type(&sym, T_INT);
 				// La valeur retour est le nom de la fonction
 				$$ = $2;
 			} else if (element->nb_parameters != 0) {
 					//TODO error: previous declaration of ‘f’ was here 
 					fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
 			}
-			// Remise à T_INT du type courant
-			change_current_type(&sym, T_INT);
 		}
 		;
 
 f_prototype	: tINT tWORD tPARO param_proto tPARC {
 			// 1ere étape : Ajout de la fonction à la table des symboles
 			// Le type courant est T_INT par defaut
-			// Changement du type courant de l'element a ajouter a la table
-			change_current_type(&sym, T_FUN);
 			struct element *element = find_sym(&sym, $2);
 			// Si l'élément n'est pas déjà dans la table des symboles
 			if (element == NULL) {
-				element = add_sym(&sym, $2);
+				element = add_sym(&sym, $2, T_FUN);
 				element->nb_parameters = $4;
 				// La fonction n'est ici pas encore initialisee
 				element->initialized = 0;
 				// On donne l'addresse de la fonction
 				element->address = sym.program_counter + 1;
-				// Remise à T_INT du type courant
-				change_current_type(&sym, T_INT);
 
 			// Dans le cas d'une redefinition il suffit seulement de vérifier
 			// le nb d'argument (car un seul type int et le nom n'importe pas)
@@ -351,8 +334,6 @@ f_prototype	: tINT tWORD tPARO param_proto tPARC {
 				//TODO error: previous declaration of ‘f’ was here 
 				fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
 			}
-			// Remise à T_INT du type courant
-			change_current_type(&sym, T_INT);
 		
 			// On stocke le contexte de symbole courant
 			// Celui-ci sera dépilé si ce prototype
@@ -374,7 +355,7 @@ f_prototype	: tINT tWORD tPARO param_proto tPARC {
 			    // Cas d'un prototype de fonction avec 2 paramètres de même nom
 			    if (elmt == NULL) { 
 			        // Ajout du symbole dans la table des symboles
-			        elmt = add_sym(&sym, param_list[i]);
+			        elmt = add_sym(&sym, param_list[i], T_INT);
 		    	        // On donne l'adresse à la variable locale
 		    	        elmt->address = sym.local_address;
 		    	        // Incrementation des adresses locales
@@ -392,26 +373,20 @@ f_prototype	: tINT tWORD tPARO param_proto tPARC {
 			$$ = $2;
 		}
 		| tINT tWORD tPARO tPARC {
-			// Changement du type courant de l'element a ajouter a la table
-			change_current_type(&sym, T_FUN);
 			struct element *element = find_sym(&sym, $2);
 			// Si l'élément n'est pas déjà dans la table des symboles
 			if (element == NULL) {
-				element = add_sym(&sym, $2);
+				element = add_sym(&sym, $2, T_FUN);
 				element->nb_parameters = 0;
 				// La fonction n'est ici pas encore initialisee
 				element->initialized = 0;
 				// On donne l'addresse de la fonction
 				element->address = sym.program_counter + 1;
-				// Remise à T_INT du type courant
-				change_current_type(&sym, T_INT);
 				
 			} else if (element->nb_parameters != 0) {
 				//TODO error: previous declaration of ‘f’ was here 
 				fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
 			}
-			// Remise à T_INT du type courant
-			change_current_type(&sym, T_INT);
 			
 			sym_push(&sym);
 			compile(&sym, "PSH ebp\n");

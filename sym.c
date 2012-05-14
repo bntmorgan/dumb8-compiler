@@ -27,7 +27,6 @@ int inc_context_stack_sym(struct t_sym *sym);
 void create_sym(struct t_sym *sym) {
   memset(sym, 0, sizeof(struct t_sym));
   sym->size = SIZE_STEP;
-  sym->current_type = T_INT;
   // Allocation de la table des symboles
   sym->t = malloc(SIZE_STEP * sizeof(struct t_sym));
   if(sym->t == NULL) {
@@ -96,7 +95,7 @@ int inc_taddress_stack(struct t_sym *sym) {
   return 0;
 }
 
-struct element* add_sym(struct t_sym *sym, char *name) {
+struct element* add_sym(struct t_sym *sym, char *name, int type) {
   // On teste si après avoir incrémenté l'index on pointe sur un élément du tableau
   if ((sym->idx + 1) >= sym->size) {
     if (inc_sym(sym) != 0) {
@@ -104,7 +103,7 @@ struct element* add_sym(struct t_sym *sym, char *name) {
     }
   }
   sym->t[sym->idx].name = name;
-  sym->t[sym->idx].type = sym->current_type;
+  sym->t[sym->idx].type = type;
   // On indique que la variable n'est pas initialisée
   sym->t[sym->idx].address = 0;
   sym->t[sym->idx].initialized = 0;
@@ -227,11 +226,6 @@ int taddress_pop(struct t_sym *sym) {
     i--;
   }
   printf("lol %d\n", sym->taddress_stack_real_head);
-  return 0;
-}
-
-int change_current_type(struct t_sym *sym, enum types t) {
-  sym->current_type = t;
   return 0;
 }
 
