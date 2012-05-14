@@ -39,6 +39,7 @@ struct element {
   int type;
   int address; // Adresse de la variable : ebp - x pour var (!! x positif), adresse pour fonction
   int initialized; // Drapeau de variable initialisée (1 si init, 0 sinon)
+  int constant; // Drapeau de variable read-only
   int nb_parameters; // Nb de parametres d'une fonction
 };
 
@@ -164,6 +165,14 @@ int taddress_push(struct t_sym *sym);
  * @return 0 si tout se passe bien -1 si erreur
  */
 int taddress_pop(struct t_sym *sym);
+ 
+/**
+ * Permet de savoir si une variable est read-only ou non.
+ *
+ * @param name Nom de la variable
+ * @return 1 si la variable est une constante, 0 sinon
+ */
+int is_constant(struct t_sym *sym, char *name);
 
 /**
  * Compile a line
