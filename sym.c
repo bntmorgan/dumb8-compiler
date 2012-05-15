@@ -121,7 +121,7 @@ void print_sym(struct t_sym *sym) {
   printf("+----------------------------------------------------------------------+\n");
   for (i = 0; i < sym->idx; i++) {
     if (sym->t[i].type == T_INT) {
-      printf("| Nom : %18s | const : %d | type : %d | init : %d | adr : %3d |\n", sym->t[i].name, sym->t[i].constant, sym->t[i].type, sym->t[i].initialized, sym->t[i].address);
+      printf("| Nom : %16s | const : %d | type : %d | init : %d | adr : %3d |\n", sym->t[i].name, sym->t[i].constant, sym->t[i].type, sym->t[i].initialized, sym->t[i].address);
     }
   }
   printf("+----------------------------------------------------------------------+\n");
@@ -158,7 +158,7 @@ int get_sym_idx(struct t_sym *sym) {
 }
 
 int get_address(struct t_sym *sym, char *name) {
-  int ret = -1;
+  int ret = NB_MAX_ADR;
   int i;
   /*La recherche debute a la fin de la table pour retourner en priorité 
    variables propres à un bloc*/

@@ -1,16 +1,15 @@
-int f(int p, int i) {
-  int a = 5;
-  p = 90;
-  int b;
-  b = p + 6;
-  int c = 42;
-  printf(a);
-  printf(b);
-  printf(c);
-  printf(p);
+int g(int i, int j) {
+  printf(i);
+  printf(j);
 }
 
-int b;
+int f() {
+  int k, o;
+  k = 45;
+  o = 7;
+  g(k,o);
+}
 
-f(4,8);
-
+int main() {
+  f();
+}

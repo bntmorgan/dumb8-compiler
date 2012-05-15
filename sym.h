@@ -7,6 +7,11 @@
 #define SIZE_STEP 32
 
 /**
+ * Nombre max de variables dans une fonction
+ */
+#define NB_MAX_ADR 1000
+
+/**
  * Les types de la table des symboles
  */
 enum types {
