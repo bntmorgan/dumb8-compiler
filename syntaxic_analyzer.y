@@ -562,10 +562,10 @@ int main(int argc, char **argv) {
       int adr = get_address(&sym, "main");
       // On teste si la fonction est bien initialisée
       if (adr == -1) {
-	fprintf(stderr, "Error : uninitialized function main\n");
+        fprintf(stderr, "Error : uninitialized function main\n");
       } else {
-	// Appel de la fonction (i.e jump à adr)
-	compile(&sym, "CAL %d\n", adr);
+        // Appel de la fonction (i.e jump à adr)
+        compile(&sym, "CAL %d\n", adr);
       }
     }
   } else {
@@ -574,6 +574,9 @@ int main(int argc, char **argv) {
 
   print_sym(&sym);
   printf("Dernière addresse du programme : %d\n", sym.program_counter);
+
+  second_pass(&sym);
+
   free_sym(&sym);
   close_files();
   return 0;  

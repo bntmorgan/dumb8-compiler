@@ -175,4 +175,8 @@ int is_constant(struct t_sym *sym, char *name);
  */
 void compile(struct t_sym *sym, const char *format, ...);
 
+/**
+ * Compiler second pass (temporary addresses if else while
+ */
+void second_pass(struct t_sym *sym);
 #endif//__SYM_H__

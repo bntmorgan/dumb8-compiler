@@ -1,6 +1,8 @@
 #ifndef __OPTIONS_H__
 #define __OPTIONS_H__
 
+#define TEMPNAME_PREFIX "lol"
+
 /**
  * Fichier de sortie
  *
@@ -8,6 +10,7 @@
  * a.out.s sera choisi
  */
 extern FILE* file_out;
+extern FILE* file_out_pass_2;
 
 /**
  * Traite les options du compilateur

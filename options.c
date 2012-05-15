@@ -9,6 +9,7 @@
 
 // Fichier de sortie
 FILE* file_out = NULL;
+FILE* file_out_pass_2 = NULL;
 
 // Sauvegarde de l'entrée standard
 int stdin_fd = 0;
@@ -19,10 +20,10 @@ void do_options(int argc, char **argv) {
   while ((c = getopt (argc, argv, "o:")) != -1) {
     switch (c) {
     case 'o':
-      file_out = fopen(optarg, "w");
-      if (file_out == NULL) {
-	perror("Error while creating output file");
-	exit(1);
+      file_out_pass_2 = fopen(optarg, "w");
+      if (file_out_pass_2 == NULL) {
+        perror("Error while creating output file");
+        exit(1);
       }
       break;
     case '?':
@@ -39,9 +40,18 @@ void do_options(int argc, char **argv) {
     }
   }
 
-  // Pas de fichier donné : fichier par défaut "a.out.s"
+  // Ouverture du fichier temporaire
+  char *name = tempnam(NULL, TEMPNAME_PREFIX);
+  file_out = fopen(name, "w+");
   if (file_out == NULL) {
-    file_out = fopen("a.out.s", "w");
+    perror("Error while creating output file");
+    exit(1);
+  }
+  free(name);
+
+  // Pas de fichier donné : fichier par défaut "a.out.s"
+  if (file_out_pass_2 == NULL) {
+    file_out_pass_2 = fopen("a.out.s", "w");
     if (file_out == NULL) {
       perror("Error while creating output file");
       exit(1);
@@ -74,4 +84,5 @@ void close_files() {
   close(stdin_fd);
   // Fermeture du fichier de sortie de compilation
   fclose(file_out);
+  fclose(file_out_pass_2);
 }
