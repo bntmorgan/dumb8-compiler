@@ -486,17 +486,17 @@ jmpif   : {
             // On récupère l'évalutaion de l'expression qui est en tête de pile
             compile(&sym, "POP eax\n");
             // On jumpe a l'adresse du else qu'on ne connais pas encore, pour l'instant -1
-            compile(&sym, "JMF temp_addr\n");
+            compile(&sym, "JMF eax temp_addr\n");
             // On empile une addresse temporaire
             taddress_push(&sym);
         }
         ;
 
 jmpelse : {
-            // On connait l'addresse JMF du if de même niveau
-            taddress_pop(&sym); 
             // On saute à l'adresse de la fin du else, après avoir réalisé le if
             compile(&sym, "JMP temp_addr\n");
+            // On connait l'addresse JMF du if de même niveau
+            taddress_pop(&sym); 
             // On empile une addresse temporaire
             taddress_push(&sym);
         }

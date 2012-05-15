@@ -216,7 +216,7 @@ int taddress_pop(struct t_sym *sym) {
   if (sym->taddress_stack_real_head < 0) {
     return -1;
   }
-  sym->ta[sym->taddress_stack_real_head].address = sym->program_counter;
+  sym->ta[sym->taddress_stack_real_head].address = sym->program_counter + 1; // On saute a la prochaine addresse !
   // Recherche du prochain head a -1
   int i = sym->taddress_stack_real_head - 1;
   while (i > -1) {
@@ -266,7 +266,7 @@ void second_pass(struct t_sym *sym) {
     }
     else {
       // On affiche l'instruction
-      line[4] = '\0'; 
+      *r = '\0';
       fprintf(file_out_pass_2, "%s", line);
       fprintf(file_out_pass_2, "%d\n", sym->ta[i].address);
       i++;
