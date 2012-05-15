@@ -121,7 +121,7 @@ void print_sym(struct t_sym *sym) {
   printf("+----------------------------------------------------------------------+\n");
   for (i = 0; i < sym->idx; i++) {
     if (sym->t[i].type == T_INT) {
-      printf("| Nom : %18s | type : %d | init : %d | const %d | adr : %3d |\n", sym->t[i].name, sym->t[i].type, sym->t[i].initialized, sym->t[i].constant, sym->t[i].address);
+      printf("| Nom : %18s | const : %d | type : %d | init : %d | adr : %3d |\n", sym->t[i].name, sym->t[i].constant, sym->t[i].type, sym->t[i].initialized, sym->t[i].address);
     }
   }
   printf("+----------------------------------------------------------------------+\n");
