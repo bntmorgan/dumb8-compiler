@@ -423,7 +423,7 @@ f_definition	: f_prototype {
 		}
 		;
 		
-f_body	: tACCO instructions tACCC {}
+f_body	: tACCO instructions tACCC {print_sym(&sym);}
 	;
 	
 f_call	: tWORD tPARO param_call tPARC {
