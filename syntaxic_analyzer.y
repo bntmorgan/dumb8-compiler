@@ -315,14 +315,14 @@ param_call	: tWORD tCOMMA param_call {
 			$$ = $3 + 1;
     }
     | tINTEGER tCOMMA param_call {
-		  compile(&sym, "AFC eax %d\n", $1);
+		  compile(&sym, "AFC eax #%d\n", $1);
 		  compile(&sym, "PSH eax\n");
 			// Incrementation du compteur du nombre de parametres
 			$$ = $3 + 1;
 		}
 		| tINTEGER {
       $$ = 1;
-      compile(&sym, "AFC eax %d\n", $1);
+      compile(&sym, "AFC eax #%d\n", $1);
 		  compile(&sym, "PSH eax\n");
 			// Incrementation du compteur du nombre de parametres
 			$$ = 1;
