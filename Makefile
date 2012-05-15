@@ -24,6 +24,10 @@ test_if : compiler test_if.c
 	./compiler -o test_if.s test_if.c
 	cp test_if.s ../asm_interpreter
 
+test_recursive : compiler test_recursive.c
+	./compiler -o test_recursive.s test_recursive.c
+	cp test_recursive.s ../asm_interpreter
+
 yacc : syntaxic_analyzer.y
 	yacc -d -o syntaxic_analyzer.c syntaxic_analyzer.y -v
 

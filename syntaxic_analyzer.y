@@ -300,45 +300,15 @@ param_proto	: tINT tWORD {
 		}
 		;
 
-param_call	: tWORD tCOMMA param_call {
-		  struct element *elmt = find_sym(&sym, $1);
-		  if (elmt == NULL) { 
-		    fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $1);
-		  } else if (elmt->initialized != 0) {
-		    int adr = get_address(&sym, $1); 
-		    compile(&sym, "COP eax [ebp]%+d\n", adr);
-		    compile(&sym, "PSH eax\n");
-			} else {
-				fprintf(stderr, "Error : uninitialized symbol '%s'\n", $1);
-			}
+param_call	: expr tCOMMA param_call {
+			// Rien a faire expr push déja la valeur
       // Incrementation du compteur du nombre de parametres
 			$$ = $3 + 1;
-    }
-    | tINTEGER tCOMMA param_call {
-		  compile(&sym, "AFC eax #%d\n", $1);
-		  compile(&sym, "PSH eax\n");
-			// Incrementation du compteur du nombre de parametres
-			$$ = $3 + 1;
 		}
-		| tINTEGER {
-      $$ = 1;
-      compile(&sym, "AFC eax #%d\n", $1);
-		  compile(&sym, "PSH eax\n");
+		| expr {
+			// Rien a faire expr push déja la valeur
 			// Incrementation du compteur du nombre de parametres
 			$$ = 1;
-    }
-		| tWORD {
-      $$ = 1;
-		  struct element *elmt = find_sym(&sym, $1);
-		  if (elmt == NULL) { 
-		    fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $1);
-		  } else if (elmt->initialized != 0) {
-		    int adr = get_address(&sym, $1); 
-		    compile(&sym, "COP eax [ebp]%+d\n", adr);
-		    compile(&sym, "PSH eax\n");
-			} else {
-				fprintf(stderr, "Error : uninitialized symbol '%s'\n", $1);
-			}
     }
 		;
 
