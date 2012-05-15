@@ -134,8 +134,8 @@ affectations	: tEQ tWORD affectations {
 		;
 
 declarations : declaration tCOMMA declarations {}
-	     | declaration {}
-	     ; 
+             | declaration {}
+             ; 
 
 declaration : tWORD affectations {
 		struct element *elmt = find_sym(&sym, $1);
@@ -163,8 +163,8 @@ declaration : tWORD affectations {
 		//Une déclaration renvoie le nom de la variable déclarée
 		$$ = $1;
             } 
-	    | tWORD {
-		// Si l'élément n'est pas déjà dans la table des symboles
+            | tWORD {
+                // Si l'élément n'est pas déjà dans la table des symboles
                 struct element *elmt = find_sym(&sym, $1);
 		if (elmt == NULL) { 
    	            // Ajout du symbole dans la table des symboles
@@ -481,52 +481,52 @@ f_call	: tWORD tPARO param_call tPARC {
 	;
 
 jmpif   : {
-                // On récupère l'évalutaion de l'expression qui est en tête de pile
-                compile(&sym, "POP eax\n");
-                // On jumpe a l'adresse du else qu'on ne connais pas encore, pour l'instant -1
-                compile(&sym, "JMF temp_addr\n");
-                // On empile une addresse temporaire
-                taddress_push(&sym);
+            // On récupère l'évalutaion de l'expression qui est en tête de pile
+            compile(&sym, "POP eax\n");
+            // On jumpe a l'adresse du else qu'on ne connais pas encore, pour l'instant -1
+            compile(&sym, "JMF eax temp_addr\n");
+            // On empile une addresse temporaire
+            taddress_push(&sym);
         }
         ;
 
 jmpelse : {
-                // On connait l'addresse JMF du if de même niveau
-                taddress_pop(&sym); 
-                // On saute à l'adresse de la fin du else, après avoir réalisé le if
-                compile(&sym, "JMP temp_addr\n");
-                // On empile une addresse temporaire
-                taddress_push(&sym);
+            // On saute à l'adresse de la fin du else, après avoir réalisé le if
+            compile(&sym, "JMP temp_addr\n");
+            // On connait l'addresse JMF du if de même niveau
+            taddress_pop(&sym); 
+            // On empile une addresse temporaire
+            taddress_push(&sym);
         }
 
-if	: tIF tPARO expr tPARC jmpif bloc_instructions %prec LOWER_THAN_ELSE {
-                // On connait l'addresse JMF du if de même niveau
-                taddress_pop(&sym); 
-        } 
-        | tIF tPARO expr tPARC jmpif instruction {
-                // Il faut au moins une instruction apres un if
-                // On connait l'addresse JMF du if de même niveau
-                taddress_pop(&sym); 
-        } %prec LOWER_THAN_ELSE 
-	| tIF tPARO expr tPARC jmpif bloc_instructions else {}
-        | tIF tPARO expr tPARC jmpif instruction else {/* Il faut au moins une instruction apres un if */}
-	;
+if  : tIF tPARO expr tPARC jmpif bloc_instructions %prec LOWER_THAN_ELSE {
+        // On connait l'addresse JMF du if de même niveau
+        taddress_pop(&sym); 
+    } 
+    | tIF tPARO expr tPARC jmpif instruction {
+        // Il faut au moins une instruction apres un if
+        // On connait l'addresse JMF du if de même niveau
+      taddress_pop(&sym); 
+    } %prec LOWER_THAN_ELSE 
+    | tIF tPARO expr tPARC jmpif bloc_instructions else {}
+    | tIF tPARO expr tPARC jmpif instruction else {/* Il faut au moins une instruction apres un if */}
+    ;
 
-else	: tELSE jmpelse bloc_instructions {
-                // On connait l'addresse JMF du if de même niveau
-                taddress_pop(&sym); 
-        }
-	| tELSE jmpelse instruction {
-		// Il faut au moins une instruction apres un else
-                // On connait l'addresse JMF du if de même niveau
-                taddress_pop(&sym); 
-	}
-	;
+else  : tELSE jmpelse bloc_instructions {
+          // On connait l'addresse JMF du if de même niveau
+          taddress_pop(&sym); 
+      }
+      | tELSE jmpelse instruction {
+          // Il faut au moins une instruction apres un else
+          // On connait l'addresse JMF du if de même niveau
+          taddress_pop(&sym); 
+      }
+      ;
 
-while	: tWHILE tPARO expr tPARC bloc_instructions {}
-	| tWHILE tPARO expr tPARC instruction {}
-	;
-		
+while : tWHILE tPARO expr tPARC bloc_instructions {}
+      | tWHILE tPARO expr tPARC instruction {}
+      ;
+    
 printf	: tPRINTF tPARO tWORD tPARC {
 		int adr = get_address(&sym, $3); 
 		struct element * elmt = find_sym(&sym, $3); 
@@ -563,10 +563,10 @@ int main(int argc, char **argv) {
       int adr = get_address(&sym, "main");
       // On teste si la fonction est bien initialisée
       if (adr == -1) {
-	fprintf(stderr, "Error : uninitialized function main\n");
+        fprintf(stderr, "Error : uninitialized function main\n");
       } else {
-	// Appel de la fonction (i.e jump à adr)
-	compile(&sym, "CAL %d\n", adr);
+        // Appel de la fonction (i.e jump à adr)
+        compile(&sym, "CAL %d\n", adr);
       }
     }
   } else {
@@ -575,6 +575,9 @@ int main(int argc, char **argv) {
 
   print_sym(&sym);
   printf("Dernière addresse du programme : %d\n", sym.program_counter);
+
+  second_pass(&sym);
+
   free_sym(&sym);
   close_files();
   return 0;  

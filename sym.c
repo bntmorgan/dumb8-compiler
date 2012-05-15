@@ -7,6 +7,7 @@
 
 // Fichier ou compiler
 extern FILE *file_out;
+extern FILE *file_out_pass_2;
 
 /**
  * Incrémente la taille de la table des symboles
@@ -136,7 +137,7 @@ void print_sym(struct t_sym *sym) {
   printf("| Adresses temporaires :                                               |\n");
   printf("+----------------------------------------------------------------------+\n");
   for (i = 0; i <= sym->taddress_stack_head; i++) {
-    printf("| Ligne : %4d | Addresse : %4d                                       |\n", sym->ta[i].line, sym->ta[i].address);
+    printf("| Ligne : %4d | Addresse : %4d                                       |\n", sym->ta[i].line + 1, sym->ta[i].address);
   }
   printf("+----------------------------------------------------------------------+\n");
 }
@@ -215,7 +216,7 @@ int taddress_pop(struct t_sym *sym) {
   if (sym->taddress_stack_real_head < 0) {
     return -1;
   }
-  sym->ta[sym->taddress_stack_real_head].address = sym->program_counter;
+  sym->ta[sym->taddress_stack_real_head].address = sym->program_counter + 1; // On saute a la prochaine addresse !
   // Recherche du prochain head a -1
   int i = sym->taddress_stack_real_head - 1;
   while (i > -1) {
@@ -225,7 +226,6 @@ int taddress_pop(struct t_sym *sym) {
     }
     i--;
   }
-  printf("lol %d\n", sym->taddress_stack_real_head);
   return 0;
 }
 
@@ -245,3 +245,33 @@ void compile(struct t_sym *sym, const char *format, ...) {
   // Incrementation du compteur d'adresses du programme
   sym->program_counter++;
 }
+
+void second_pass(struct t_sym *sym) {
+  int i = 0;
+  // On revient au debut du fichier pour traiter les addresses temporaires
+  fseek(file_out, 0, SEEK_SET);
+  // On boucle sur toutes les lignes
+  while (1) {
+    char *line = NULL;
+    size_t size = 0;
+    size_t lus = getline(&line, &size, file_out);
+    // Si on a fini
+    if (lus == -1) {
+      break;
+    }
+    // On teste si la ligne contient une adresse temporaire
+    char *r = strstr(line, "temp_addr");
+    if (r == NULL) {
+      fprintf(file_out_pass_2, "%s", line);
+    }
+    else {
+      // On affiche l'instruction
+      *r = '\0';
+      fprintf(file_out_pass_2, "%s", line);
+      fprintf(file_out_pass_2, "%d\n", sym->ta[i].address);
+      i++;
+    }
+    free(line);
+  }
+}
+
