@@ -24,6 +24,10 @@ test_if : compiler test_if.c
 	./compiler -o test_if.s test_if.c
 	cp test_if.s ../asm_interpreter
 
+test_while : compiler test_while.c
+	./compiler -o test_while.s test_while.c
+	cp test_while.s ../asm_interpreter
+
 test_recursive : compiler test_recursive.c
 	./compiler -o test_recursive.s test_recursive.c
 	cp test_recursive.s ../asm_interpreter

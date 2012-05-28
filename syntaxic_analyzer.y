@@ -10,6 +10,8 @@
 extern int line;
   
 void yyerror(char *s);
+//Var temporaire pour stocker la première ligne
+int line_while;
 
 // Table des symboles
 struct t_sym sym;
@@ -106,13 +108,13 @@ instruction	: tINT declarations tSEMICOLON {
 		| printf tSEMICOLON {
 			printf("affichage d'une variable\n");
 		}
-                | if {
+    | if {
 			printf("if\n");
 		} 
 		| while {
-			printf("while\n");
+			  printf("while\n");
 		}
-                | tSEMICOLON
+    | tSEMICOLON
 		;
 
 affectations	: tEQ tWORD affectations {
@@ -194,51 +196,65 @@ expr	: terme {}
 		//Addition des deux registes et stock du resultat dans eax
 		compile(&sym, "ADD eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
+    // Une expr prend la valeur du program_counter du premier terme qui la compose
+    $$ = $1;
 	} 
 	| expr tSUB expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "SOU eax eax ebx\n");
 		compile(&sym, "PSH eax\n");	
+    $$ = $1;
 	} 
 	| expr tDIV expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "DIV eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
+    $$ = $1;
 	} 
 	| expr tSTAR expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "MUL eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
+    $$ = $1;
 	} 
 	| expr tEQEQ expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "EQU eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
+    $$ = $1;
 	}
 	| expr tSUP expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "SUP eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
+    $$ = $1;
 	}
   	| expr tINF expr {
 		compile(&sym, "POP ebx\n");
 		compile(&sym, "POP eax\n");
 		compile(&sym, "INF eax eax ebx\n");
 		compile(&sym, "PSH eax\n");
+    $$ = $1;
 	}
 	;
 
-terme : tPARO expr tPARC {}
+terme : tPARO expr tPARC {
+    $$ = $2;    
+  }
 	| tINTEGER {
+    // Un terme prend la valeur du program_counter de la premère instruction
+    // qui le compose
+    $$ = sym.program_counter+1;
 		compile(&sym, "AFC eax #%d\n",$1);
 		compile(&sym, "PSH eax\n");
 	}
 	| tWORD {
+    $$ = sym.program_counter+1;
 		struct element *elmt = find_sym(&sym, $1);
 		if (elmt != NULL) { 
 		    if (elmt->initialized != 0) {
@@ -453,7 +469,7 @@ f_call	: tWORD tPARO param_call tPARC {
 jmpif   : {
             // On récupère l'évalutaion de l'expression qui est en tête de pile
             compile(&sym, "POP eax\n");
-            // On jumpe a l'adresse du else qu'on ne connais pas encore, pour l'instant -1
+            // On jumpe a l'adresse du else qu'on ne connait pas encore, pour l'instant -1
             compile(&sym, "JMF eax temp_addr\n");
             // On empile une addresse temporaire
             taddress_push(&sym);
@@ -493,10 +509,29 @@ else  : tELSE jmpelse bloc_instructions {
       }
       ;
 
-while : tWHILE tPARO expr tPARC bloc_instructions {}
-      | tWHILE tPARO expr tPARC instruction {}
+jmpwhile : {
+            compile(&sym, "POP eax\n");
+            // On jumpe a l'adresse de la fin de la boucle qu'on ne connait pas encore
+            compile(&sym, "JMF eax temp_addr\n");
+            taddress_push(&sym);
+         }
+         ;
+
+while : tWHILE tPARO expr tPARC jmpwhile bloc_instructions {
+          // line_while : première instruction du test du while
+          line_while = $3;
+          // La ligne line_while fait référence à la première instruction 
+          // relative au test du while
+          compile(&sym, "JMP %d\n",line_while);
+          taddress_pop(&sym); 
+      }
+      | tWHILE tPARO expr tPARC jmpwhile instruction {
+          line_while = $3;
+          compile(&sym, "JMP %d\n",line_while);
+          taddress_pop(&sym); 
+      }
       ;
-    
+  
 printf	: tPRINTF tPARO tWORD tPARC {
 		int adr = get_address(&sym, $3); 
 		struct element * elmt = find_sym(&sym, $3); 
@@ -505,7 +540,7 @@ printf	: tPRINTF tPARO tWORD tPARC {
 		} else if (elmt->initialized ==0 ) {
 		  fprintf(stderr, "Error : uninitialized symbol '%s'\n", $3);
 		} else {
-                  compile(&sym, "PRI [ebp]%+d\n", adr);
+      compile(&sym, "PRI [ebp]%+d\n", adr);
 		}
 	}
 	;

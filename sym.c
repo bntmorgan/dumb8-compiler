@@ -64,6 +64,7 @@ void create_sym(struct t_sym *sym) {
 void free_sym(struct t_sym *sym){
   free(sym->t);
   free(sym->context_stack);
+  free(sym->ta);
 }
 
 int inc_sym(struct t_sym *sym) {
@@ -137,7 +138,7 @@ void print_sym(struct t_sym *sym) {
   printf("| Adresses temporaires :                                               |\n");
   printf("+----------------------------------------------------------------------+\n");
   for (i = 0; i <= sym->taddress_stack_head; i++) {
-    printf("| Ligne : %4d | Addresse : %4d                                       |\n", sym->ta[i].line + 1, sym->ta[i].address);
+    printf("| Ligne : %4d | Adresse : %4d                                        |\n", sym->ta[i].line + 1, sym->ta[i].address);
   }
   printf("+----------------------------------------------------------------------+\n");
 }
@@ -263,8 +264,7 @@ void second_pass(struct t_sym *sym) {
     char *r = strstr(line, "temp_addr");
     if (r == NULL) {
       fprintf(file_out_pass_2, "%s", line);
-    }
-    else {
+    } else {
       // On affiche l'instruction
       *r = '\0';
       fprintf(file_out_pass_2, "%s", line);
