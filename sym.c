@@ -249,27 +249,41 @@ void compile(struct t_sym *sym, const char *format, ...) {
 
 void second_pass(struct t_sym *sym) {
   int i = 0;
+  struct element * elmt;
   // On revient au debut du fichier pour traiter les addresses temporaires
   fseek(file_out, 0, SEEK_SET);
   // On boucle sur toutes les lignes
   while (1) {
-    char *line = NULL;
-    size_t size = 0;
-    size_t lus = getline(&line, &size, file_out);
+    char *line = malloc(sizeof(char)*30);
+    char *lus = fgets(line, 30, file_out);
     // Si on a fini
-    if (lus == -1) {
+    if (lus == NULL) {
       break;
     }
     // On teste si la ligne contient une adresse temporaire
+    // liée à un if
     char *r = strstr(line, "temp_addr");
-    if (r == NULL) {
-      fprintf(file_out_pass_2, "%s", line);
-    } else {
+    if (r != NULL) {
       // On affiche l'instruction
       *r = '\0';
       fprintf(file_out_pass_2, "%s", line);
       fprintf(file_out_pass_2, "%d\n", sym->ta[i].address);
       i++;
+    } else if (r = strstr(line, "f_addr") != NULL) {
+      // Test si adresse temporaire liée à une déclaration de fonction en décalé du prototype
+      char *eol = strstr(line, "\n");
+      *eol = '\0';
+      elmt = find_sym(sym, (r+7));
+      *r = '\0';
+      if (elmt->address != -1) {
+        fprintf(file_out_pass_2, "%s", line);
+        fprintf(file_out_pass_2, "%d\n", elmt->address);
+      } else {
+        perror("Error : function uninitialized");
+        exit(EXIT_FAILURE);
+      }
+    } else {
+      fprintf(file_out_pass_2, "%s", line);
     }
     free(line);
   }

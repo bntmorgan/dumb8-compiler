@@ -11,6 +11,7 @@ extern int line;
   
 void yyerror(char *s);
 //Var temporaire pour stocker la première ligne
+//du test d'un while
 int line_while;
 
 // Table des symboles
@@ -52,11 +53,27 @@ struct t_sym sym;
 instructions_top : instruction instructions_top {}
                  | bloc_instructions instructions_top {}
 		             | f_definition instructions_top {}
-                 | f_prototype tSEMICOLON instructions_top {}
+                 | f_prototype tSEMICOLON {
+		               struct element *elmt = find_sym(&sym, $1);
+		               // Si la fonction n'est pas initialisée,
+                   // l'adresse de celle-ci n'est toujours pas connue
+                   if (elmt->initialized == 0){ 
+                     elmt->address = -1;
+                   }
+                   compile(&sym, "RET %d\n",elmt->nb_parameters);
+                   sym_pop(&sym);
+                 } instructions_top {}
                  | instruction {}
                  | bloc_instructions {}
 		             | f_definition {}
-                 | f_prototype tSEMICOLON {}
+                 | f_prototype tSEMICOLON {
+                   //Pas génial, à optimiser  
+		               struct element *elmt = find_sym(&sym, $1);
+                   if (elmt->initialized == 0){ 
+		                 elmt->address = -1;
+		               }
+                   compile(&sym, "RET %d\n",elmt->nb_parameters);
+                   sym_pop(&sym);}
                  ;
 
 instructions 	: instruction instructions {}
@@ -338,17 +355,17 @@ f_prototype	: tINT tWORD tPARO {
 				element = add_sym(&sym, $2, T_FUN);
 				// La fonction n'est ici pas encore initialisee
 				element->initialized = 0;
-				// On donne l'addresse de la fonction
-				element->address = sym.program_counter + 1;
 			}	
+		  // On donne l'addresse de la fonction
+			element->address = sym.program_counter + 1;
 			// On stocke le contexte de symbole courant
 			sym_push(&sym);
 			compile(&sym, "PSH ebp\n");
-                        compile(&sym, "COP ebp esp\n");
+      compile(&sym, "COP ebp esp\n");
 			// On doit redémarrer les adresses locales à 2
 			sym.local_address = 2;
-	        }
-		 param_proto tPARC {
+	  }
+		param_proto tPARC {
 			struct element *element = find_sym(&sym, $2);
 			element->nb_parameters = $5;
 			if (element->nb_parameters != $5) {
@@ -364,15 +381,14 @@ f_prototype	: tINT tWORD tPARO {
 				element = add_sym(&sym, $2, T_FUN);
 				element->nb_parameters = 0;
 				// La fonction n'est ici pas encore initialisee
-				element->initialized = 0;
-				// On donne l'addresse de la fonction
-				element->address = sym.program_counter + 1;
-				
+				element->initialized = 0;	
 			} else if (element->nb_parameters != 0) {
 				//TODO error: previous declaration of ‘f’ was here 
 				fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
 			}
-			
+		  // On donne l'addresse de la fonction
+			element->address = sym.program_counter + 1;
+		
 			sym_push(&sym);
 			compile(&sym, "PSH ebp\n");
       compile(&sym, "COP ebp esp\n");
@@ -413,24 +429,21 @@ f_body	: tACCO instructions tACCC {
 f_call	: tWORD tPARO param_call tPARC {
 		struct element * element = find_sym(&sym, $1);
 		if (element != NULL) {
-			// Verification de l'initialisation de la fonction
-			if (element->initialized == 0) {
-			   	fprintf(stderr, "Error : function `%s` is not initialized.\n", $1);			     
 			// Verification du nombre d'argument
-			} else if ((element->nb_parameters) > $3) {
+			if ((element->nb_parameters) > $3) {
 				fprintf(stderr, "Error : too few arguments to function '%s'\n", $1);
 			} else if ((element->nb_parameters) < $3) {
 				fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
 			} else {
-				printf("Function call ok -> %s has %d parameters\n", $1, element->nb_parameters);
 				// Appel de la fonction
 				int adr = get_address(&sym, $1);
 				// On teste si la fonction est bien initialisée
 				if (adr == -1) {
-				   	fprintf(stderr, "Error : uninitialized function '%s'\n", $1);
-				} else {
+          // Adresse temporaire en attendant l'initialisation
+          compile(&sym, "CAL f_addr_%s\n",$1);
+        } else {
 					// Appel de la fonction (i.e jump à adr)
-				     	compile(&sym, "CAL %d\n", adr);
+				  compile(&sym, "CAL %d\n", adr);
 				}
 			}
 		} else {
@@ -440,23 +453,14 @@ f_call	: tWORD tPARO param_call tPARC {
 	| tWORD tPARO tPARC {
 		struct element *element = find_sym(&sym, $1);
 		if (element != NULL) {
-			// Verification de l'initialisation de la fonction
-			if (element->initialized == 0) {
-				fprintf(stderr, "Error : uninitialized function '%s'\n", $1);
-			}
-			// Verification du nombre d'argument
 			if (element->nb_parameters > 0) {
 				fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
 			} else { 
-				printf("Function call ok -> %s has %d parameters\n", $1, 0);
-				// Appel de la fonction
 				int adr = get_address(&sym, $1);
-				// On teste si la fonction est bien initialisée
 				if (adr == -1) {
-				   	fprintf(stderr, "Error : uninitialized function '%s'\n", $1);
+          compile(&sym, "CAL f_addr_%s\n",$1);
 				} else {
-					// Appel de la fonction (i.e jump à adr)
-				     	compile(&sym, "CAL %d\n", adr);
+				  compile(&sym, "CAL %d\n", adr);
 				}
 			}
 		}

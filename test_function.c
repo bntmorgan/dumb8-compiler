@@ -1,13 +1,11 @@
-int g(int i, int j) {
-  printf(i);
-  printf(j);
+int g(int i, int j);
+int f() {
+  g(33,44); 
 }
 
-int f() {
-  int k, o;
-  k = 45;
-  o = 7;
-  g(k,o);
+int g(int i, int j) {
+  printf(j);
+  printf(i);
 }
 
 int main() {
