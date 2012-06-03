@@ -31,7 +31,7 @@ struct t_sym sym;
 %token <entier> tINTEGER
 %token <chaine> tWORD
 
-%token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEQEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
+%token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEQEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR 
 
 %type <entier> expr param_proto param_call terme
 %type <chaine> f_prototype declaration declarations
@@ -60,7 +60,6 @@ instructions_top : instruction instructions_top {}
                    if (elmt->initialized == 0){ 
                      elmt->address = -1;
                    }
-                   compile(&sym, "RET %d\n",elmt->nb_parameters);
                    sym_pop(&sym);
                  } instructions_top {}
                  | instruction {}
@@ -72,7 +71,6 @@ instructions_top : instruction instructions_top {}
                    if (elmt->initialized == 0){ 
 		                 elmt->address = -1;
 		               }
-                   compile(&sym, "RET %d\n",elmt->nb_parameters);
                    sym_pop(&sym);}
                  ;
 
@@ -285,6 +283,7 @@ terme : tPARO expr tPARC {
 		    fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $1);
 		}
 	}
+  | f_call {}
 	;
 
 param_proto	: tINT tWORD {
@@ -360,10 +359,8 @@ f_prototype	: tINT tWORD tPARO {
 			element->address = sym.program_counter + 1;
 			// On stocke le contexte de symbole courant
 			sym_push(&sym);
-			compile(&sym, "PSH ebp\n");
-      compile(&sym, "COP ebp esp\n");
-			// On doit redémarrer les adresses locales à 2
-			sym.local_address = 2;
+			// On doit redémarrer les adresses locales à 3
+			sym.local_address = 3;
 	  }
 		param_proto tPARC {
 			struct element *element = find_sym(&sym, $2);
@@ -372,6 +369,7 @@ f_prototype	: tINT tWORD tPARO {
 				//TODO error: previous declaration of ‘f’ was here 
 				fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
 			}
+
 			$$ = $2;
 		}
 		| tINT tWORD tPARO tPARC {
@@ -390,8 +388,6 @@ f_prototype	: tINT tWORD tPARO {
 			element->address = sym.program_counter + 1;
 		
 			sym_push(&sym);
-			compile(&sym, "PSH ebp\n");
-      compile(&sym, "COP ebp esp\n");
 			sym.local_address = -1;
 			
 			$$ = $2;
@@ -407,6 +403,8 @@ f_definition	: f_prototype {
 				// La fonction est desormais initialisee
 		 		elmt->initialized = 1;
                 	}
+			compile(&sym, "PSH ebp\n");
+      compile(&sym, "COP ebp esp\n");
 			sym.local_address = -1;
 		}
 		f_body {
@@ -424,6 +422,13 @@ f_definition	: f_prototype {
 f_body	: tACCO instructions tACCC {
        		print_sym(&sym);
 	}
+        | tACCO instructions tRETURN expr tSEMICOLON tACCC {
+          print_sym(&sym);
+          // On récupère la valeur de retour calculée
+          compile(&sym, "POP eax\n");
+          // On la met dans la zone mémoire de la valeur de retour
+          compile(&sym, "COP [ebp]+2 eax\n");
+        }
 	;
 	
 f_call	: tWORD tPARO param_call tPARC {
@@ -435,6 +440,11 @@ f_call	: tWORD tPARO param_call tPARC {
 			} else if ((element->nb_parameters) < $3) {
 				fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
 			} else {
+
+        // On laisse de la place pour la valeur de retour
+        compile(&sym, "AFC ebx #1\n");
+        compile(&sym, "SOU esp esp ebx\n");
+
 				// Appel de la fonction
 				int adr = get_address(&sym, $1);
 				// On teste si la fonction est bien initialisée

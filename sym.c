@@ -269,7 +269,7 @@ void second_pass(struct t_sym *sym) {
       fprintf(file_out_pass_2, "%s", line);
       fprintf(file_out_pass_2, "%d\n", sym->ta[i].address);
       i++;
-    } else if (r = strstr(line, "f_addr") != NULL) {
+    } else if ((r = strstr(line, "f_addr")) != NULL) {
       // Test si adresse temporaire liée à une déclaration de fonction en décalé du prototype
       char *eol = strstr(line, "\n");
       *eol = '\0';

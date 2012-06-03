@@ -28,6 +28,7 @@ printf			{return tPRINTF;}
 if			{return tIF;}
 else			{return tELSE;}
 while			{return tWHILE;}
+return {return tRETURN;}
 {INTEGER}	        {yylval.entier = atoi(yytext); return tINTEGER;}
 ==			{return tEQEQ;}
 =			{return tEQ;}
