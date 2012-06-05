@@ -113,6 +113,17 @@ void print_sym(struct t_sym *sym);
 struct element* find_sym(struct t_sym *sym, char *name);
 
 /**
+ * Cherche un symbole dans le contexte courant et retourne NULL
+ * s'il n'existe pas
+ * Complexité O(n)
+ * 
+ * @param sym la table des symboles
+ * @param name Nom de la variable dans la table des symboles
+ * @return struct element ou NULL si elle n'y est pas
+ */
+struct element* find_context(struct t_sym *sym, char *name);
+
+/**
  * Empile l'index courant de la table des symboles
  *
  * @param sym la table des symboles

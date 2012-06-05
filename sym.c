@@ -155,6 +155,15 @@ struct element* find_sym(struct t_sym *sym, char *name) {
   return NULL;
 }
 
+struct element* find_context(struct t_sym *sym, char *name) {
+  int i;
+  for (i = sym->idx - 1; i >= sym->context_stack[sym->context_stack_head].idx; i--) {
+    if (strcmp(name, sym->t[i].name) == 0) {
+      return &(sym->t[i]);
+    }
+  }
+  return NULL;
+}
 int get_sym_idx(struct t_sym *sym) {
   return sym->idx;
 }
