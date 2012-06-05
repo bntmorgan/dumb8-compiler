@@ -196,4 +196,5 @@ void compile(struct t_sym *sym, const char *format, ...);
  *
  */
 void second_pass(struct t_sym *sym);
+
 #endif//__SYM_H__
