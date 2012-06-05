@@ -164,6 +164,7 @@ struct element* find_context(struct t_sym *sym, char *name) {
   }
   return NULL;
 }
+
 int get_sym_idx(struct t_sym *sym) {
   return sym->idx;
 }
