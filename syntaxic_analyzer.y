@@ -109,7 +109,7 @@ instruction	: tINT declarations tSEMICOLON {
 				compile(&sym, "POP eax\n");
 			} else {
 				compile(&sym, "POP eax\n");
-				compile(&sym, "COP [ebp]%+d eax\n", elmt->address);
+				compile(&sym, "COP [ebp%+d] eax\n", elmt->address);
 				// Le symbole est desormais initialise
 				elmt->initialized = 1;
 			}
@@ -137,7 +137,7 @@ affectations	: tEQ tWORD affectations {
 			else {
 				// Dans tous les cas, la derniere valeur de eax est la valeur d'affectation de la variable
 				// Evite un pop de la valeur et un push de cette meme valeur
-				compile(&sym, "COP [ebp]%+d eax\n", elmt->address);
+				compile(&sym, "COP [ebp%+d] eax\n", elmt->address);
 				// Le symbole est desormais initialise
 				elmt->initialized = 1;
 			}
@@ -168,7 +168,7 @@ declaration : tWORD affectations {
 		    compile(&sym, "AFC ebx #1\n");
 		    compile(&sym, "SOU esp esp ebx\n");
 		    // Initialication de la variable
-		    compile(&sym, "COP [ebp]%+d eax\n", elmt->address);
+		    compile(&sym, "COP [ebp%+d] eax\n", elmt->address);
 		}
 		else {
 		    fprintf(stderr, "Error : redefinition of '%s'\n", $1);
@@ -270,7 +270,7 @@ terme : tPARO expr tPARC {
 		if (elmt != NULL) { 
 		    if (elmt->initialized != 0) {
 		        int adr = get_address(&sym, $1); 
-		        compile(&sym, "COP eax [ebp]%+d\n", adr);
+		        compile(&sym, "COP eax [ebp%+d]\n", adr);
 		        compile(&sym, "PSH eax\n");
 				} else {
 						fprintf(stderr, "Error : uninitialized symbol '%s'\n", $1);
@@ -423,7 +423,7 @@ f_body	: tACCO instructions tACCC {
           // On récupère la valeur de retour calculée
           compile(&sym, "POP eax\n");
           // On la met dans la zone mémoire de la valeur de retour
-          compile(&sym, "COP [ebp]+2 eax\n");
+          compile(&sym, "COP [ebp+2] eax\n");
         }
 	;
 	
@@ -550,7 +550,7 @@ printf	: tPRINTF tPARO tWORD tPARC {
 		} else if (elmt->initialized ==0 ) {
 		  fprintf(stderr, "Error : uninitialized symbol '%s'\n", $3);
 		} else {
-      compile(&sym, "PRI [ebp]%+d\n", adr);
+      compile(&sym, "PRI [ebp%+d]\n", adr);
 		}
 	}
 	;
