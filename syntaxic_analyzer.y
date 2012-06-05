@@ -48,8 +48,7 @@ struct t_sym sym;
 
 %%
 
-instructions_top : instruction instructions_top {}
-                 | bloc_instructions instructions_top {}
+instructions_top : bloc_instructions instructions_top {}
 		             | f_definition instructions_top {}
                  | f_prototype tSEMICOLON {
 		               struct element *elmt = find_sym(&sym, $1);
