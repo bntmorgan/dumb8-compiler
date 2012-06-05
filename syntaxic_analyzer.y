@@ -4,8 +4,6 @@
 #include <string.h>
 #include "options.h"
 #include "sym.h"
-// Nombre maximum de paramètres pour une fonction
-#define NB_MAX_PARAM 20
 
 extern int line;
   
