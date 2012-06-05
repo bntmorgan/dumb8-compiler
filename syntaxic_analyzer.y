@@ -153,7 +153,7 @@ declarations : declaration tCOMMA declarations {}
              ; 
 
 declaration : tWORD affectations {
-		struct element *elmt = find_sym(&sym, $1);
+		struct element *elmt = find_context(&sym, $1);
 		// Si l'élément n'est pas déjà dans la table des symboles
 		if (elmt == NULL) { 
 	    	// Ajout du symbole dans la table des symboles
@@ -172,7 +172,6 @@ declaration : tWORD affectations {
 		    compile(&sym, "COP [ebp]%+d eax\n", elmt->address);
 		}
 		else {
-		    //TODO note: previous definition of ‘%s’ was here
 		    fprintf(stderr, "Error : redefinition of '%s'\n", $1);
 		}
 		//Une déclaration renvoie le nom de la variable déclarée
@@ -180,7 +179,7 @@ declaration : tWORD affectations {
             } 
             | tWORD {
                 // Si l'élément n'est pas déjà dans la table des symboles
-                struct element *elmt = find_sym(&sym, $1);
+                struct element *elmt = find_context(&sym, $1);
 		if (elmt == NULL) { 
    	            // Ajout du symbole dans la table des symboles
                     elmt = add_sym(&sym, $1, T_INT);
