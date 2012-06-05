@@ -1,8 +1,8 @@
 all : compiler
 
-#test_aux : compiler test_aux.c
-#	./compiler -o test_aux.s test_aux.c
-#	cp test_aux.s ../asm_interpreter
+test_aux : compiler test_aux.c
+	./compiler -o test_aux.s test_aux.c
+	cp test_aux.s ../asm_interpreter
 
 test_grammar : compiler test_grammar.c
 	./compiler -o test_grammar.s test_grammar.c
