@@ -48,7 +48,7 @@ return {return tRETURN;}
 "." {return tDOT;}
 , {return tCOMMA;}
 {WHITESPACE} {}
-\n      {line++;}
-.     {return tERROR;}
+\n {line++;}
+. {return tERROR;}
 
 %%
