@@ -24,6 +24,10 @@ test_main : compiler test_main.c
 	./compiler -o test_main.s test_main.c
 	cp test_main.s ../asm_interpreter
 
+fibo : compiler fibo.c
+	./compiler -o fibo.s fibo.c
+	cp fibo.s ../asm_interpreter
+
 test_if : compiler test_if.c
 	./compiler -o test_if.s test_if.c
 	cp test_if.s ../asm_interpreter
