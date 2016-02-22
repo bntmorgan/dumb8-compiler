@@ -43,8 +43,8 @@ test_recursive : compiler test_recursive.c
 yacc : syntaxic_analyzer.y
 	yacc -d -o syntaxic_analyzer.c syntaxic_analyzer.y -v
 
-lex : lexical_analyzer.lex
-	lex -o lexical_analyzer.c lexical_analyzer.lex
+lex : lexical_analyzer.l
+	lex -o lexical_analyzer.c lexical_analyzer.l
 
 sym : sym.c
 	gcc -c -g -Wall sym.c
@@ -53,7 +53,7 @@ options : options.c
 	gcc -c -g -Wall options.c
 
 compiler : yacc lex sym options
-	gcc -g -Wall -o compiler lexical_analyzer.c syntaxic_analyzer.c sym.o options.o -ll -ly
+	gcc -g -Wall -o compiler lexical_analyzer.c syntaxic_analyzer.c sym.o options.o -ly -lfl
 
 clean : 
 	rm *.o

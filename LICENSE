@@ -1,4 +1,3 @@
-/*
 Copyright (C) 2012  Carla Sauvanaud
 Copyright (C) 2012, 2016  Benoît Morgan
 
@@ -16,21 +15,3 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with dumb8-compiler.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-int g() {
-  int b;
-  b = 12;
-  printf(b);
-}
-
-int f() {
-  int a;
-  a = 3 * 4 + 5;
-  printf(a);
-  g();
-}
-
-int main() {
-  f();
-}
