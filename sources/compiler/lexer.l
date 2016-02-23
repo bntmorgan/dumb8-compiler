@@ -21,12 +21,15 @@ along with dumb8-compiler.  If not, see <http://www.gnu.org/licenses/>.
 %{
 #include <stdlib.h>
 #include <stdio.h>
-#include "syntaxic_analyzer.h"
+#include "parser.h"
 
 int line = 1;
 
 %}
- 
+
+%option noinput
+%option nounput
+
 DIGIT [0-9]
 DECIMALNUM [0-9]+
 EXPONETIAL {DECIMALNUM}e{DECIMALNUM}

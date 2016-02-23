@@ -1,59 +1,84 @@
-all : compiler
+# Copyright (C) 2012, 2016 Benoît Morgan
+#
+# This file is part of dumb8-emulator.
+#
+# dumb8-emulator is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# dumb8-emulator is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with dumb8-emulator.  If not, see <http://www.gnu.org/licenses/>.
 
-test_aux : compiler test_aux.c
-	./compiler -o test_aux.s test_aux.c
-	cp test_aux.s ../asm_interpreter
+CC						:= gcc
+LD						:= gcc
+LX						:= lex
+YC						:= yacc
+BUILD_DIR			:= build
+BINARY_DIR		:= binary
 
-test_grammar : compiler test_grammar.c
-	./compiler -o test_grammar.s test_grammar.c
-	cp test_grammar.s ../asm_interpreter
+CC_FLAGS_ALL		:= -Wall -Werror -Werror -Isources/include
 
-test_const : compiler test_const.c
-	./compiler -o test_const.s test_const.c
-	cp test_const.s ../asm_interpreter
+LD_FLAGS_ALL		:=
 
-test_expr : compiler test_grammar.c
-	./compiler -o test_expr.s test_expr.c
-	cp test_expr.s ../asm_interpreter
+define SRC_2_OBJ
+  $(foreach src,$(1),$(patsubst sources/%,$(BUILD_DIR)/%,$(src)))
+endef
 
-test_function : compiler test_function.c
-	./compiler -o test_function.s test_function.c
-	cp test_function.s ../asm_interpreter
+define SRC_2_BIN
+  $(foreach src,$(1),$(patsubst sources/%,$(BINARY_DIR)/%,$(src)))
+endef
 
-test_main : compiler test_main.c
-	./compiler -o test_main.s test_main.c
-	cp test_main.s ../asm_interpreter
+all: targets
 
-fibo : compiler fibo.c
-	./compiler -o fibo.s fibo.c
-	cp fibo.s ../asm_interpreter
+# Overriden in rules.mk
+TARGETS :=
+OBJECTS :=
 
-test_if : compiler test_if.c
-	./compiler -o test_if.s test_if.c
-	cp test_if.s ../asm_interpreter
+dir	:= sources
+include	$(dir)/rules.mk
 
-test_while : compiler test_while.c
-	./compiler -o test_while.s test_while.c
-	cp test_while.s ../asm_interpreter
+$(BINARY_DIR)/%:
+	@echo "[LD] $@"
+	@mkdir -p $(dir $@)
+	@$(LD) -o $@ $(LD_OBJECTS) $(LD_FLAGS_TARGET)
 
-test_recursive : compiler test_recursive.c
-	./compiler -o test_recursive.s test_recursive.c
-	cp test_recursive.s ../asm_interpreter
+$(BUILD_DIR)/%.o: sources/%.c
+	@echo "[CC] $< -> $@"
+	@mkdir -p $(dir $@)
+	@$(CC) $(CC_FLAGS_ALL) $(CC_FLAGS_TARGET) -o $@ -c $<
 
-yacc : syntaxic_analyzer.y
-	yacc -d -o syntaxic_analyzer.c syntaxic_analyzer.y -v
+$(BUILD_DIR)/%.o: $(BUILD_DIR)/%.c
+	@echo "[CC] $< -> $@"
+	@mkdir -p $(dir $@)
+	@$(CC) $(CC_FLAGS_ALL) $(CC_FLAGS_TARGET) -o $@ -c $<
 
-lex : lexical_analyzer.l
-	lex -o lexical_analyzer.c lexical_analyzer.l
+$(BUILD_DIR)/%.h: $(BUILD_DIR)/%.c
+	@#
 
-sym : sym.c
-	gcc -c -g -Wall sym.c
+$(BUILD_DIR)/%.c: sources/%.y
+	@echo "[YC] $< -> $@"
+	@mkdir -p $(dir $@)
+	@$(YC) -d -o $@ $<
 
-options : options.c
-	gcc -c -g -Wall options.c
+$(BUILD_DIR)/%.c: sources/%.l
+	@echo "[LX] $< -> $@"
+	@mkdir -p $(dir $@)
+	@$(LX) --header-file=$(subst .c,.h,$@) -o $@ $<
 
-compiler : yacc lex sym options
-	gcc -g -Wall -o compiler lexical_analyzer.c syntaxic_analyzer.c sym.o options.o -ly -lfl
+targets: $(TARGETS)
 
-clean : 
-	rm *.o
+clean:
+	@rm -fr $(BUILD_DIR) $(BINARY_DIR)
+
+info:
+	@echo Targets [$(TARGETS)]
+	@echo Objects [$(OBJECTS)]
+
+# Remove default rulez
+.SUFFIXES:

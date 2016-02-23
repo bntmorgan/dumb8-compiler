@@ -24,10 +24,11 @@ along with dumb8-compiler.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include "options.h"
 #include "sym.h"
+#include "lexer.h"
 
 extern int line;
-  
-void yyerror(char *s);
+
+void yyerror(const char *s);
 //Var temporaire pour stocker la première ligne
 //du test d'un while
 int line_while;
@@ -575,7 +576,7 @@ printf : tPRINTF tPARO tWORD tPARC {
        ;
 %%
 
-void yyerror(char *s) {
+void yyerror(const char *s) {
   fprintf(stderr, "Vous ne maîtrisez pas les concepts : %s at line %d\n", s, line);
 }
 
