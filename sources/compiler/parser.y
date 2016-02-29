@@ -50,14 +50,14 @@ struct t_sym sym;
 %token <entier> tINTEGER
 %token <chaine> tWORD
 
-%token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEQEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR 
+%token tINT tCONST tPRINTF tIF tELSE tWHILE tRETURN tSUP tINF tADD tSUB tDIV tSTAR tEQ tEQEQ tEXCL tPARO tPARC tACCO tACCC tSEMICOLON tDOT tCOMMA tERROR
 
 %type <entier> expr param_proto param_call terme
 %type <chaine> f_prototype declaration declarations
 
 // Définition des associativités par ordre croissant de priorité
 %right tEQ
-%left tADD tSUB 
+%left tADD tSUB
 %left tSTAR tDIV
 %nonassoc tEQEQ tINF tSUP
 
@@ -75,7 +75,7 @@ instructions_top : bloc_instructions instructions_top {}
                    struct element *elmt = find_sym(&sym, $1);
                    // Si la fonction n'est pas initialisée,
                    // l'adresse de celle-ci n'est toujours pas connue
-                   if (elmt->initialized == 0){ 
+                   if (elmt->initialized == 0){
                      elmt->address = -1;
                    }
                    sym_pop(&sym);
@@ -84,9 +84,9 @@ instructions_top : bloc_instructions instructions_top {}
                  | bloc_instructions {}
                  | f_definition {}
                  | f_prototype tSEMICOLON {
-                   //Pas génial, à optimiser  
+                   //Pas génial, à optimiser
                    struct element *elmt = find_sym(&sym, $1);
-                   if (elmt->initialized == 0){ 
+                   if (elmt->initialized == 0){
                      elmt->address = -1;
                    }
                    sym_pop(&sym);}
@@ -114,7 +114,7 @@ instruction : tINT declarations tSEMICOLON {
                 fprintf(stderr, "Error : variable undeclared.\n");
               } else {
                 elmt->constant = 1;
-              }       
+              }
             }
             | tWORD affectations tSEMICOLON {
               printf ("affectation de variable\n");
@@ -143,7 +143,7 @@ instruction : tINT declarations tSEMICOLON {
             }
             | if {
               printf("if\n");
-            } 
+            }
             | while {
               printf("while\n");
             }
@@ -170,12 +170,12 @@ affectations : tEQ tWORD affectations {
 
 declarations : declaration tCOMMA declarations {}
              | declaration {}
-             ; 
+             ;
 
 declaration : tWORD affectations {
               struct element *elmt = find_context(&sym, $1);
               // Si l'élément n'est pas déjà dans la table des symboles
-              if (elmt == NULL) { 
+              if (elmt == NULL) {
                 // Ajout du symbole dans la table des symboles
                 elmt = add_sym(&sym, $1, T_INT);
                 // On donne l'adresse à la variable locale
@@ -196,11 +196,11 @@ declaration : tWORD affectations {
               }
               //Une déclaration renvoie le nom de la variable déclarée
               $$ = $1;
-            } 
+            }
             | tWORD {
               // Si l'élément n'est pas déjà dans la table des symboles
               struct element *elmt = find_context(&sym, $1);
-              if (elmt == NULL) { 
+              if (elmt == NULL) {
                 // Ajout du symbole dans la table des symboles
                 elmt = add_sym(&sym, $1, T_INT);
                 // On donne l'adresse à la variable locale
@@ -230,28 +230,28 @@ expr : terme {}
        compile(&sym, "PSH eax\n");
        // Une expr prend la valeur du program_counter du premier terme qui la compose
        $$ = $1;
-     } 
+     }
      | expr tSUB expr {
        compile(&sym, "POP ebx\n");
        compile(&sym, "POP eax\n");
        compile(&sym, "SOU eax eax ebx\n");
-       compile(&sym, "PSH eax\n"); 
+       compile(&sym, "PSH eax\n");
        $$ = $1;
-     } 
+     }
      | expr tDIV expr {
        compile(&sym, "POP ebx\n");
        compile(&sym, "POP eax\n");
        compile(&sym, "DIV eax eax ebx\n");
        compile(&sym, "PSH eax\n");
        $$ = $1;
-     } 
+     }
      | expr tSTAR expr {
        compile(&sym, "POP ebx\n");
        compile(&sym, "POP eax\n");
        compile(&sym, "MUL eax eax ebx\n");
        compile(&sym, "PSH eax\n");
        $$ = $1;
-     } 
+     }
      | expr tEQEQ expr {
        compile(&sym, "POP ebx\n");
        compile(&sym, "POP eax\n");
@@ -288,9 +288,9 @@ terme : tPARO expr tPARC {
       | tWORD {
         $$ = sym.program_counter+1;
         struct element *elmt = find_sym(&sym, $1);
-        if (elmt != NULL) { 
+        if (elmt != NULL) {
           if (elmt->initialized != 0) {
-            int adr = get_address(&sym, $1); 
+            int adr = get_address(&sym, $1);
             compile(&sym, "COP eax [ebp%+d]\n", adr);
             compile(&sym, "PSH eax\n");
           } else {
@@ -308,7 +308,7 @@ param_proto : tINT tWORD {
               struct element *elmt = find_sym(&sym, $2);
               // Si l'élément n'est pas déjà dans la table des symboles
               // Cas d'un prototype de fonction avec 2 paramètres de même nom
-              if (elmt == NULL) { 
+              if (elmt == NULL) {
                 // Ajout du symbole dans la table des symboles
                 elmt = add_sym(&sym, $2, T_INT);
                 // On donne l'adresse à la variable locale
@@ -331,7 +331,7 @@ param_proto : tINT tWORD {
               struct element *elmt = find_sym(&sym, $2);
               // Si l'élément n'est pas déjà dans la table des symboles
               // Cas d'un prototype de fonction avec 2 paramètres de même nom
-              if (elmt == NULL) { 
+              if (elmt == NULL) {
                 // Ajout du symbole dans la table des symboles
                 elmt = add_sym(&sym, $2, T_INT);
                 // On consière la variable initialisée car elle le sera forcément à l'appel
@@ -370,7 +370,7 @@ f_prototype : tINT tWORD tPARO {
                 element = add_sym(&sym, $2, T_FUN);
                 // La fonction n'est ici pas encore initialisee
                 element->initialized = 0;
-              } 
+              }
               // On donne l'addresse de la fonction
               element->address = sym.program_counter + 1;
               // On stocke le contexte de symbole courant
@@ -382,10 +382,10 @@ f_prototype : tINT tWORD tPARO {
               struct element *element = find_sym(&sym, $2);
               element->nb_parameters = $5;
               if (element->nb_parameters != $5) {
-                //TODO error: previous declaration of ‘f’ was here 
+                //TODO error: previous declaration of ‘f’ was here
                 fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
               }
-            
+
               $$ = $2;
             }
             | tINT tWORD tPARO tPARC {
@@ -395,21 +395,21 @@ f_prototype : tINT tWORD tPARO {
                 element = add_sym(&sym, $2, T_FUN);
                 element->nb_parameters = 0;
                 // La fonction n'est ici pas encore initialisee
-                element->initialized = 0; 
+                element->initialized = 0;
               } else if (element->nb_parameters != 0) {
-                //TODO error: previous declaration of ‘f’ was here 
+                //TODO error: previous declaration of ‘f’ was here
                 fprintf(stderr, "Error : conflicting types for '%s'\n", $2);
               }
               // On donne l'addresse de la fonction
               element->address = sym.program_counter + 1;
-            
+
               sym_push(&sym);
               sym.local_address = -1;
-              
+
               $$ = $2;
             }
             ;
-    
+
 f_definition : f_prototype {
                struct element *elmt = find_sym(&sym, $1);
                if (elmt == NULL) {
@@ -434,7 +434,7 @@ f_definition : f_prototype {
                sym_pop(&sym);
              }
              ;
-    
+
 f_body : tACCO instructions tACCC {
          print_sym(&sym);
        }
@@ -446,7 +446,7 @@ f_body : tACCO instructions tACCC {
          compile(&sym, "COP [ebp+2] eax\n");
        }
        ;
-  
+
 f_call : tWORD tPARO param_call tPARC {
          struct element * element = find_sym(&sym, $1);
          if (element != NULL) {
@@ -481,7 +481,7 @@ f_call : tWORD tPARO param_call tPARC {
          if (element != NULL) {
            if (element->nb_parameters > 0) {
              fprintf(stderr, "Error : too many arguments to function '%s'\n", $1);
-           } else { 
+           } else {
              int adr = get_address(&sym, $1);
              if (adr == -1) {
                compile(&sym, "CAL f_addr_%s\n",$1);
@@ -493,7 +493,7 @@ f_call : tWORD tPARO param_call tPARC {
          else {
            fprintf(stderr, "Error : undefined symbol '%s'\n", $1);
          }
-       } 
+       }
        ;
 
 jmpif : {
@@ -510,32 +510,32 @@ jmpelse : {
           // On saute à l'adresse de la fin du else, après avoir réalisé le if
           compile(&sym, "JMP temp_addr\n");
           // On connait l'addresse JMF du if de même niveau
-          taddress_pop(&sym); 
+          taddress_pop(&sym);
           // On empile une addresse temporaire
           taddress_push(&sym);
         }
 
 if : tIF tPARO expr tPARC jmpif bloc_instructions %prec LOWER_THAN_ELSE {
      // On connait l'addresse JMF du if de même niveau
-     taddress_pop(&sym); 
-   } 
+     taddress_pop(&sym);
+   }
    | tIF tPARO expr tPARC jmpif instruction {
      // Il faut au moins une instruction apres un if
      // On connait l'addresse JMF du if de même niveau
-     taddress_pop(&sym); 
-   } %prec LOWER_THAN_ELSE 
+     taddress_pop(&sym);
+   } %prec LOWER_THAN_ELSE
    | tIF tPARO expr tPARC jmpif bloc_instructions else {}
    | tIF tPARO expr tPARC jmpif instruction else {/* Il faut au moins une instruction apres un if */}
    ;
 
 else : tELSE jmpelse bloc_instructions {
        // On connait l'addresse JMF du if de même niveau
-       taddress_pop(&sym); 
+       taddress_pop(&sym);
      }
      | tELSE jmpelse instruction {
        // Il faut au moins une instruction apres un else
        // On connait l'addresse JMF du if de même niveau
-       taddress_pop(&sym); 
+       taddress_pop(&sym);
      }
      ;
 
@@ -550,21 +550,21 @@ jmpwhile : {
 while : tWHILE tPARO expr tPARC jmpwhile bloc_instructions {
         // line_while : première instruction du test du while
         line_while = $3;
-        // La ligne line_while fait référence à la première instruction 
+        // La ligne line_while fait référence à la première instruction
         // relative au test du while
         compile(&sym, "JMP %d\n",line_while);
-        taddress_pop(&sym); 
+        taddress_pop(&sym);
       }
       | tWHILE tPARO expr tPARC jmpwhile instruction {
         line_while = $3;
         compile(&sym, "JMP %d\n",line_while);
-        taddress_pop(&sym); 
+        taddress_pop(&sym);
       }
       ;
-  
+
 printf : tPRINTF tPARO tWORD tPARC {
-         int adr = get_address(&sym, $3); 
-         struct element * elmt = find_sym(&sym, $3); 
+         int adr = get_address(&sym, $3);
+         struct element * elmt = find_sym(&sym, $3);
          if (adr > NB_MAX_ADR) {
            fprintf(stderr, "Error : '%s' undeclared (first use in this function).\n", $3);
          } else if (elmt->initialized ==0 ) {
@@ -615,5 +615,5 @@ int main(int argc, char **argv) {
 
   free_sym(&sym);
   close_files();
-  return 0;  
+  return 0;
 }
